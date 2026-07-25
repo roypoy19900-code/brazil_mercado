@@ -3,620 +3,450 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>A表格转C表格处理工具</title>
+    <title>Excel 订单处理工具1.3</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
         body {
-            font-family: 'Microsoft YaHei', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 900px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
             margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            padding: 40px;
+            padding: 20px;
+            background-color: #f5f5f5;
         }
-        
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
         h1 {
             color: #333;
             text-align: center;
-            margin-bottom: 10px;
-            font-size: 28px;
         }
-        
-        .subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 14px;
+        .form-group {
+            margin-bottom: 20px;
         }
-        
-        .upload-section {
-            background: #f8f9fa;
-            border: 2px dashed #667eea;
-            border-radius: 8px;
-            padding: 30px;
-            text-align: center;
-            margin-bottom: 25px;
-            transition: all 0.3s;
-        }
-        
-        .upload-section:hover {
-            border-color: #764ba2;
-            background: #f0f1ff;
-        }
-        
-        .upload-section input[type="file"] {
-            display: none;
-        }
-        
-        .upload-label {
-            display: inline-block;
-            padding: 12px 30px;
-            background: #667eea;
-            color: white;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background 0.3s;
-        }
-        
-        .upload-label:hover {
-            background: #764ba2;
-        }
-        
-        .file-info {
-            margin-top: 15px;
-            color: #666;
-            font-size: 14px;
-        }
-        
-        .input-section {
-            margin-bottom: 25px;
-        }
-        
-        .input-section label {
+        label {
             display: block;
-            margin-bottom: 8px;
-            color: #333;
+            margin-bottom: 5px;
             font-weight: bold;
-            font-size: 15px;
+            color: #555;
         }
-        
-        .input-section input {
+        input[type="file"], input[type="text"] {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            transition: border-color 0.3s;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
         }
-        
-        .input-section input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
-        .process-btn {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        button {
+            background-color: #007bff;
             color: white;
+            padding: 12px 24px;
             border: none;
-            border-radius: 6px;
-            font-size: 18px;
+            border-radius: 4px;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            margin-bottom: 25px;
-        }
-        
-        .process-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-        }
-        
-        .process-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        
-        .log-section {
-            background: #1e1e1e;
-            color: #d4d4d4;
-            border-radius: 8px;
-            padding: 20px;
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-            max-height: 400px;
-            overflow-y: auto;
-            display: none;
-        }
-        
-        .log-section.active {
-            display: block;
-        }
-        
-        .log-title {
-            color: #667eea;
-            font-weight: bold;
-            margin-bottom: 10px;
-            font-size: 15px;
-        }
-        
-        .log-entry {
-            margin: 5px 0;
-            line-height: 1.6;
-        }
-        
-        .log-entry.info {
-            color: #4ec9b0;
-        }
-        
-        .log-entry.success {
-            color: #6a9955;
-        }
-        
-        .log-entry.error {
-            color: #f44747;
-        }
-        
-        .log-entry.warning {
-            color: #dcdcaa;
-        }
-        
-        .download-section {
-            text-align: center;
-            margin-top: 25px;
-            display: none;
-        }
-        
-        .download-section.active {
-            display: block;
-        }
-        
-        .download-btn {
-            display: inline-block;
-            padding: 12px 30px;
-            background: #28a745;
-            color: white;
-            border-radius: 6px;
-            text-decoration: none;
             font-size: 16px;
-            transition: background 0.3s;
+            width: 100%;
         }
-        
-        .download-btn:hover {
-            background: #218838;
+        button:hover {
+            background-color: #0056b3;
         }
-        
-        .status {
-            text-align: center;
-            margin-top: 15px;
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #log {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
             font-size: 14px;
-            color: #666;
+            white-space: pre-wrap;
+        }
+        .log-entry {
+            margin-bottom: 5px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 2px;
+        }
+        .log-error {
+            color: #dc3545;
+        }
+        .log-success {
+            color: #28a745;
+        }
+        .log-info {
+            color: #17a2b8;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>A表格转C表格处理工具</h1>
-        <p class="subtitle">上传A表格文件，自动按照执行步骤生成C表格</p>
+        <h1>Excel 订单处理工具</h1>
         
-        <div class="upload-section">
-            <input type="file" id="fileInput" accept=".xlsx,.xls" />
-            <label for="fileInput" class="upload-label">选择A表格文件</label>
-            <div class="file-info" id="fileInfo">未选择文件</div>
+        <div class="form-group">
+            <label for="fileInput">上传 A 表格 (Excel 文件):</label>
+            <input type="file" id="fileInput" accept=".xlsx, .xls">
         </div>
         
-        <div class="input-section">
-            <label for="shopUrl">店铺网址（第10步使用）：</label>
-            <input type="text" id="shopUrl" placeholder="请输入店铺网址，可选填" />
+        <div class="form-group">
+            <label for="shopUrl">店铺网址:</label>
+            <input type="text" id="shopUrl" placeholder="请输入店铺网址">
         </div>
         
-        <button class="process-btn" id="processBtn" onclick="processFile()">开始处理</button>
+        <button id="processBtn" onclick="processFile()">开始处理</button>
         
-        <div class="log-section" id="logSection">
-            <div class="log-title">运行日志</div>
-            <div id="logContent"></div>
+        <div class="form-group">
+            <label>运行日志:</label>
+            <div id="log"></div>
         </div>
-        
-        <div class="download-section" id="downloadSection">
-            <a href="#" class="download-btn" id="downloadLink" download>下载C表格</a>
-        </div>
-        
-        <div class="status" id="status"></div>
     </div>
-    
+
     <script>
-        // 日志记录函数
-        const logEntries = [];
-        
-        function addLog(message, type = 'info') {
-            const timestamp = new Date().toLocaleTimeString('zh-CN');
-            const logEntry = `[${timestamp}] [${type.toUpperCase()}] ${message}`;
-            logEntries.push(logEntry);
-            
-            const logContent = document.getElementById('logContent');
-            const entryDiv = document.createElement('div');
-            entryDiv.className = `log-entry ${type}`;
-            entryDiv.textContent = logEntry;
-            logContent.appendChild(entryDiv);
-            
-            // 自动滚动到底部
-            logContent.scrollTop = logContent.scrollHeight;
-            
-            console.log(logEntry);
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
         }
-        
-        // 文件选择监听
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                document.getElementById('fileInfo').textContent = `已选择: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
-                addLog(`用户选择文件: ${file.name}`, 'info');
-            }
-        });
-        
-        // B表格的订单编号处理函数（模拟B.xlsx中的逻辑）
-        function processOrderNumber(orderNum) {
-            // 根据B表格的逻辑：如果原文件中显示相同的订单编号有多笔商品，则添加-1、-2等后缀
-            // 这里简化处理：直接返回原始订单编号
-            // 实际应用中需要根据B表格的具体函数逻辑实现
-            return orderNum;
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
         }
-        
-        // 葡萄牙语日期转换为标准格式
-        function convertPortugueseDate(dateStr) {
+
+        // 葡萄牙语月份映射
+        const monthMap = {
+            'janeiro': '01', 'fevereiro': '02', 'março': '03', 'abril': '04',
+            'maio': '05', 'junho': '06', 'julho': '07', 'agosto': '08',
+            'setembro': '09', 'outubro': '10', 'novembro': '11', 'dezembro': '12'
+        };
+
+        function parsePortugueseDate(dateStr) {
             if (!dateStr || typeof dateStr !== 'string') return '';
             
-            // 月份映射
-            const monthMap = {
-                'janeiro': '01', 'fevereiro': '02', 'março': '03', 'abril': '04',
-                'maio': '05', 'junho': '06', 'julho': '07', 'agosto': '08',
-                'setembro': '09', 'outubro': '10', 'novembro': '11', 'dezembro': '12'
-            };
+            // 尝试匹配格式: "28 de fevereiro de 2026 22:48 hs."
+            const regex = /(\d{1,2})\s+de\s+([a-zA-Záéíóúãõç]+)\s+de\s+(\d{4})/;
+            const match = dateStr.match(regex);
             
-            // 匹配格式: "28 de fevereiro de 2026 22:48 hs."
-            const match = dateStr.match(/(\d{1,2})\s+de\s+(\w+)\s+de\s+(\d{4})/);
             if (match) {
                 const day = match[1].padStart(2, '0');
-                const month = monthMap[match[2].toLowerCase()];
+                const monthName = match[2].toLowerCase();
                 const year = match[3];
+                const month = monthMap[monthName];
                 
                 if (month) {
                     return `${year}/${month}/${day}`;
                 }
             }
             
-            // 尝试其他常见日期格式
-            try {
-                const date = new Date(dateStr);
-                if (!isNaN(date.getTime())) {
-                    const y = date.getFullYear();
-                    const m = String(date.getMonth() + 1).padStart(2, '0');
-                    const d = String(date.getDate()).padStart(2, '0');
-                    return `${y}/${m}/${d}`;
-                }
-            } catch (e) {
-                // 忽略解析错误
+            // 如果已经是标准格式，直接返回
+            if (/^\d{4}\/\d{2}\/\d{2}$/.test(dateStr)) {
+                return dateStr;
             }
             
-            return dateStr;
+            return dateStr; // 返回原值如果无法解析
         }
-        
-        // 主处理函数
-        async function processFile() {
+
+        function processFile() {
+            clearLog();
             const fileInput = document.getElementById('fileInput');
             const shopUrl = document.getElementById('shopUrl').value.trim();
             const processBtn = document.getElementById('processBtn');
-            const logSection = document.getElementById('logSection');
-            const downloadSection = document.getElementById('downloadSection');
             
-            // 验证
             if (!fileInput.files || fileInput.files.length === 0) {
-                alert('请先选择A表格文件！');
-                addLog('处理失败: 未选择文件', 'error');
+                log('请先选择 A 表格文件', 'error');
                 return;
             }
             
-            // 禁用按钮
+            const file = fileInput.files[0];
+            log(`开始处理文件: ${file.name}`, 'info');
+            log(`店铺网址: ${shopUrl || '(未填写)'}`, 'info');
+            
             processBtn.disabled = true;
             processBtn.textContent = '处理中...';
             
-            // 显示日志区域
-            logSection.classList.add('active');
-            downloadSection.classList.remove('active');
+            const reader = new FileReader();
             
-            // 清空日志
-            document.getElementById('logContent').innerHTML = '';
-            logEntries.length = 0;
-            
-            addLog('========== 开始处理 ==========', 'info');
-            addLog(`店铺网址输入: ${shopUrl || '未填写'}`, 'info');
-            
-            try {
-                const file = fileInput.files[0];
-                const data = await file.arrayBuffer();
-                addLog(`成功读取文件: ${file.name}`, 'success');
-                
-                // 读取Excel
-                const workbook = XLSX.read(data, { type: 'array' });
-                const sheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[sheetName];
-                
-                // 转换为JSON（数组格式，保留空行）
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
-                
-                addLog(`读取到 ${jsonData.length} 行数据`, 'info');
-                
-                // 步骤1: 删除第1行至第5行（索引0-4）
-                addLog('步骤1: 删除前5行...', 'info');
-                let processedData = jsonData.slice(5);
-                addLog(`删除后剩余 ${processedData.length} 行`, 'success');
-                
-                // 步骤2: 列名替换映射
-                addLog('步骤2: 执行列名替换...', 'info');
-                const columnMapping = {
-                    'N.º de venda': '订单编号',      // A列 (索引0)
-                    'Unidades': '商品数量',           // G列 (索引6)
-                    'Total (BRL)': '订单金额',        // R列 (索引17)
-                    'Data da venda': '订单日期',      // B列 (索引1)
-                    'Transportador': '物流企业名称',   // AS列 (索引44)
-                    'Número de rastreamento': '快递单号', // AT列 (索引45)
-                    'Título do anúncio': '商品名称'    // X列 (索引23)
-                };
-                
-                // 获取第一行作为表头
-                if (processedData.length > 0) {
-                    const headers = processedData[0];
-                    addLog(`原始表头: ${headers.join(', ')}`, 'info');
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
                     
-                    // 替换表头
-                    for (let i = 0; i < headers.length; i++) {
-                        const oldName = headers[i];
-                        if (columnMapping[oldName]) {
-                            headers[i] = columnMapping[oldName];
-                            addLog(`列名替换: "${oldName}" -> "${columnMapping[oldName]}"`, 'info');
-                        }
-                    }
-                    processedData[0] = headers;
-                }
-                
-                // 步骤3: 筛选并删除不符合条件的行
-                addLog('步骤3: 执行数据筛选...', 'info');
-                let filteredData = [processedData[0]]; // 保留表头
-                
-                // 获取各列索引（基于新的表头）
-                const headers = processedData[0];
-                const colIndex = {
-                    '商品数量': headers.indexOf('商品数量'),
-                    '订单金额': headers.indexOf('订单金额'),
-                    '快递单号': headers.indexOf('快递单号'),
-                    'Estado': headers.indexOf('Estado'),
-                    'Forma de entrega': headers.indexOf('Forma de entrega')
-                };
-                
-                addLog(`列索引 - 商品数量:${colIndex['商品数量']}, 订单金额:${colIndex['订单金额']}, 快递单号:${colIndex['快递单号']}, Estado:${colIndex['Estado']}, Forma de entrega:${colIndex['Forma de entrega']}`, 'info');
-                
-                let deletedCount = 0;
-                for (let i = 1; i < processedData.length; i++) {
-                    const row = processedData[i];
-                    let shouldDelete = false;
-                    let deleteReason = '';
+                    // 假设数据在第一个 sheet
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
                     
-                    // 检查商品数量（G列）是否为0或空白
-                    const qty = row[colIndex['商品数量']];
-                    if (qty === '' || qty === null || qty === undefined || Number(qty) === 0) {
-                        shouldDelete = true;
-                        deleteReason = '商品数量为0或空白';
-                    }
+                    // 转换为 JSON，header:1 表示返回数组的数组
+                    let jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
                     
-                    // 检查订单金额（R列）是否为0或空白
-                    const amount = row[colIndex['订单金额']];
-                    if (!shouldDelete && (amount === '' || amount === null || amount === undefined || Number(amount) === 0)) {
-                        shouldDelete = true;
-                        deleteReason = '订单金额为0或空白';
-                    }
+                    log(`原始数据行数: ${jsonData.length}`, 'info');
                     
-                    // 检查快递单号（AT列）是否为0或空白
-                    const tracking = row[colIndex['快递单号']];
-                    if (!shouldDelete && (tracking === '' || tracking === null || tracking === undefined || tracking === 0)) {
-                        shouldDelete = true;
-                        deleteReason = '快递单号为0或空白';
-                    }
-                    
-                    // 检查Estado列是否不等于Entregue
-                    const estado = row[colIndex['Estado']];
-                    if (!shouldDelete && estado !== 'Entregue') {
-                        shouldDelete = true;
-                        deleteReason = `Estado不等于Entregue (当前值: ${estado})`;
-                    }
-                    
-                    // 检查Forma de entrega列是否非空白
-                    const formaEntrega = row[colIndex['Forma de entrega']];
-                    if (!shouldDelete && formaEntrega !== '' && formaEntrega !== null && formaEntrega !== undefined) {
-                        shouldDelete = true;
-                        deleteReason = `Forma de entrega非空白 (当前值: ${formaEntrega})`;
-                    }
-                    
-                    if (shouldDelete) {
-                        deletedCount++;
-                        addLog(`删除第${i + 1}行: ${deleteReason}`, 'warning');
+                    // 步骤 1: 删除前 5 行
+                    if (jsonData.length > 5) {
+                        jsonData = jsonData.slice(5);
+                        log('已删除前 5 行', 'success');
                     } else {
-                        filteredData.push(row);
+                        log('数据行数不足 5 行，无法删除', 'error');
+                        processBtn.disabled = false;
+                        processBtn.textContent = '开始处理';
+                        return;
                     }
-                }
-                
-                addLog(`筛选完成: 删除${deletedCount}行，保留${filteredData.length - 1}行有效数据`, 'success');
-                processedData = filteredData;
-                
-                // 步骤4: 处理订单编号（使用B表格函数）
-                addLog('步骤4: 处理订单编号...', 'info');
-                const orderNumIdx = headers.indexOf('订单编号');
-                if (orderNumIdx !== -1) {
-                    for (let i = 1; i < processedData.length; i++) {
-                        const originalNum = processedData[i][orderNumIdx];
-                        if (originalNum) {
-                            processedData[i][orderNumIdx] = processOrderNumber(originalNum);
+                    
+                    if (jsonData.length === 0) {
+                        log('删除后无数据', 'error');
+                        processBtn.disabled = false;
+                        processBtn.textContent = '开始处理';
+                        return;
+                    }
+                    
+                    // 获取表头
+                    const headers = jsonData[0];
+                    log(`表头: ${headers.join(', ')}`, 'info');
+                    
+                    // 步骤 2: 重命名列
+                    // 原名称到索引的映射
+                    const originalHeaders = {
+                        'N.° de venda': -1,
+                        'Data da venda': -1,
+                        'Estado': -1,
+                        'Unidades': -1,
+                        'Total (BRL)': -1,
+                        'Título do anúncio': -1,
+                        'Transportador': -1,
+                        'Número de rastreamento': -1,
+                        'Forma de entrega': -1
+                    };
+                    
+                    // 找到各列的索引
+                    for (let i = 0; i < headers.length; i++) {
+                        const h = String(headers[i]).trim();
+                        if (h in originalHeaders) {
+                            originalHeaders[h] = i;
                         }
                     }
-                    addLog('订单编号处理完成', 'success');
-                }
-                
-                // 步骤5: 转换葡萄牙语日期
-                addLog('步骤5: 转换订单日期格式...', 'info');
-                const dateIdx = headers.indexOf('订单日期');
-                if (dateIdx !== -1) {
-                    let convertedCount = 0;
-                    for (let i = 1; i < processedData.length; i++) {
-                        const originalDate = processedData[i][dateIdx];
-                        if (originalDate) {
-                            const convertedDate = convertPortugueseDate(String(originalDate));
-                            if (convertedDate !== originalDate) {
-                                processedData[i][dateIdx] = convertedDate;
-                                convertedCount++;
+                    
+                    log('列索引映射:', 'info');
+                    for (const [name, idx] of Object.entries(originalHeaders)) {
+                        log(`  ${name}: ${idx >= 0 ? idx : '未找到'}`, 'info');
+                    }
+                    
+                    // 检查必要列是否存在
+                    const requiredCols = ['N.° de venda', 'Data da venda', 'Estado', 'Unidades', 'Total (BRL)', 'Título do anúncio', 'Número de rastreamento', 'Forma de entrega'];
+                    for (const col of requiredCols) {
+                        if (originalHeaders[col] === -1) {
+                            log(`警告: 未找到列 "${col}"`, 'error');
+                        }
+                    }
+                    
+                    // 步骤 3: 筛选并删除不符合条件的行
+                    const filteredData = [headers]; // 保留表头
+                    let removedCount = 0;
+                    
+                    for (let i = 1; i < jsonData.length; i++) {
+                        const row = jsonData[i];
+                        let shouldRemove = false;
+                        
+                        // G 列 (Unidades) - 商品数量: 数值为 0 或空白 -> 删除
+                        const unidadesIdx = originalHeaders['Unidades'];
+                        if (unidadesIdx >= 0) {
+                            const unidades = row[unidadesIdx];
+                            if (unidades === '' || unidades === null || unidades === undefined || Number(unidades) === 0) {
+                                shouldRemove = true;
                             }
                         }
+                        
+                        // R 列 (Total (BRL)) - 订单金额: 数值为 0 或空白 -> 删除
+                        const totalIdx = originalHeaders['Total (BRL)'];
+                        if (!shouldRemove && totalIdx >= 0) {
+                            const total = row[totalIdx];
+                            if (total === '' || total === null || total === undefined || Number(total) === 0) {
+                                shouldRemove = true;
+                            }
+                        }
+                        
+                        // AT 列 (Número de rastreamento) - 快递单号: 数值等于 0 或空白 -> 删除
+                        const trackingIdx = originalHeaders['Número de rastreamento'];
+                        if (!shouldRemove && trackingIdx >= 0) {
+                            const tracking = row[trackingIdx];
+                            if (tracking === '' || tracking === null || tracking === undefined || String(tracking).trim() === '0') {
+                                shouldRemove = true;
+                            }
+                        }
+                        
+                        // C 列 (Estado) - 状态: 不等于 Entregue -> 删除
+                        const estadoIdx = originalHeaders['Estado'];
+                        if (!shouldRemove && estadoIdx >= 0) {
+                            const estado = String(row[estadoIdx]).trim();
+                            if (estado !== 'Entregue') {
+                                shouldRemove = true;
+                            }
+                        }
+                        
+                        // AW 列 (Forma de entrega) - 有数据 -> 删除
+                        const formaIdx = originalHeaders['Forma de entrega'];
+                        if (!shouldRemove && formaIdx >= 0) {
+                            const forma = row[formaIdx];
+                            if (forma !== '' && forma !== null && forma !== undefined) {
+                                shouldRemove = true;
+                            }
+                        }
+                        
+                        if (shouldRemove) {
+                            removedCount++;
+                        } else {
+                            filteredData.push(row);
+                        }
                     }
-                    addLog(`日期转换完成: 共转换${convertedCount}条记录`, 'success');
+                    
+                    log(`筛选后剩余行数: ${filteredData.length - 1} (删除了 ${removedCount} 行)`, 'success');
+                    
+                    if (filteredData.length <= 1) {
+                        log('筛选后无有效数据', 'error');
+                        processBtn.disabled = false;
+                        processBtn.textContent = '开始处理';
+                        return;
+                    }
+                    
+                    // 步骤 4: 订单编号去重处理 (模拟 COUNTIF)
+                    const vendaIdx = originalHeaders['N.° de venda'];
+                    if (vendaIdx < 0) {
+                        log('错误: 未找到订单编号列', 'error');
+                        processBtn.disabled = false;
+                        processBtn.textContent = '开始处理';
+                        return;
+                    }
+                    
+                    const countMap = {}; // 用于记录每个订单编号出现的次数
+                    
+                    for (let i = 1; i < filteredData.length; i++) {
+                        const row = filteredData[i];
+                        let vendaId = String(row[vendaIdx]).trim();
+                        
+                        if (!countMap[vendaId]) {
+                            countMap[vendaId] = 1;
+                        } else {
+                            countMap[vendaId]++;
+                            // 如果重复，追加 "-计数"
+                            row[vendaIdx] = `${vendaId}-${countMap[vendaId]}`;
+                        }
+                    }
+                    
+                    log('订单编号去重处理完成', 'success');
+                    
+                    // 步骤 5: 日期格式转换
+                    const dataIdx = originalHeaders['Data da venda'];
+                    if (dataIdx >= 0) {
+                        for (let i = 1; i < filteredData.length; i++) {
+                            const row = filteredData[i];
+                            if (row[dataIdx]) {
+                                row[dataIdx] = parsePortugueseDate(String(row[dataIdx]));
+                            }
+                        }
+                        log('日期格式转换完成', 'success');
+                    }
+                    
+                    // 步骤 6 & 7: 生成 C 表格数据
+                    // C 表格列映射:
+                    // A: 订单编号 (来自 A 表格 A 列，已处理)
+                    // B: 订单日期 (来自 A 表格 B 列，已转换)
+                    // C: 订单币种 (固定 BRL)
+                    // D: 订单金额 (来自 A 表格 R 列)
+                    // E: 商品名称 (来自 A 表格 X 列)
+                    // F: 商品数量 (来自 A 表格 G 列)
+                    // G: 商品单价 (D/F)
+                    // H: 店铺网址 (用户输入)
+                    // I: 快递单号 (来自 A 表格 AT 列)
+                    // J: 商品名称 (来自 A 表格 X 列，重复)
+                    // K: 电商平台英文名称 (固定 Mercado)
+                    
+                    const cHeaders = ['订单编号', '订单日期', '订单币种', '订单金额', '商品名称', '商品数量', '商品单价', '店铺网址', '快递单号', '商品名称', '电商平台英文名称'];
+                    const cData = [cHeaders];
+                    
+                    const tituloIdx = originalHeaders['Título do anúncio'];
+                    const transportadorIdx = originalHeaders['Transportador'];
+                    
+                    for (let i = 1; i < filteredData.length; i++) {
+                        const row = filteredData[i];
+                        
+                        const orderId = row[vendaIdx];
+                        const orderDate = dataIdx >= 0 ? row[dataIdx] : '';
+                        const currency = 'BRL';
+                        const amount = totalIdx >= 0 ? row[totalIdx] : 0;
+                        const productName = tituloIdx >= 0 ? row[tituloIdx] : '';
+                        const quantity = unidadesIdx >= 0 ? row[unidadesIdx] : 0;
+                        const unitPrice = quantity && Number(quantity) !== 0 ? (Number(amount) / Number(quantity)).toFixed(2) : 0;
+                        const shopUrlVal = shopUrl;
+                        const trackingNumber = trackingIdx >= 0 ? row[trackingIdx] : '';
+                        const platform = 'Mercado';
+                        
+                        cData.push([
+                            orderId,
+                            orderDate,
+                            currency,
+                            amount,
+                            productName,
+                            quantity,
+                            unitPrice,
+                            shopUrlVal,
+                            trackingNumber,
+                            productName,
+                            platform
+                        ]);
+                    }
+                    
+                    log(`生成 C 表格数据，共 ${cData.length - 1} 行`, 'success');
+                    
+                    // 创建新的 workbook 和 worksheet
+                    const newWorkbook = XLSX.utils.book_new();
+                    const newWorksheet = XLSX.utils.aoa_to_sheet(cData);
+                    
+                    // 设置列宽
+                    const colWidths = [
+                        { wch: 20 }, // 订单编号
+                        { wch: 15 }, // 订单日期
+                        { wch: 10 }, // 订单币种
+                        { wch: 15 }, // 订单金额
+                        { wch: 30 }, // 商品名称
+                        { wch: 10 }, // 商品数量
+                        { wch: 10 }, // 商品单价
+                        { wch: 30 }, // 店铺网址
+                        { wch: 20 }, // 快递单号
+                        { wch: 30 }, // 商品名称
+                        { wch: 15 }  // 电商平台英文名称
+                    ];
+                    newWorksheet['!cols'] = colWidths;
+                    
+                    XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, '订单明细');
+                    
+                    // 生成文件并下载
+                    const fileName = 'C表格_处理后.xlsx';
+                    XLSX.writeFile(newWorkbook, fileName);
+                    
+                    log(`文件已生成并下载: ${fileName}`, 'success');
+                    
+                } catch (error) {
+                    log(`处理出错: ${error.message}`, 'error');
+                    console.error(error);
+                } finally {
+                    processBtn.disabled = false;
+                    processBtn.textContent = '开始处理';
                 }
-                
-                // 步骤6-7: 创建C表格数据结构
-                addLog('步骤6-7: 构建C表格数据...', 'info');
-                
-                // C表格的表头
-                const cHeaders = ['订单编号', '订单日期', '订单币种', '订单金额', '商品名称', '商品数量', '商品单价', '店铺网址', '快递单号', '物流企业名称', '电商平台英文名称'];
-                const cData = [cHeaders];
-                
-                // 获取A表格各列索引
-                const aColIndex = {
-                    '订单编号': headers.indexOf('订单编号'),
-                    '订单日期': headers.indexOf('订单日期'),
-                    '商品数量': headers.indexOf('商品数量'),
-                    '订单金额': headers.indexOf('订单金额'),
-                    '商品名称': headers.indexOf('商品名称'),
-                    '快递单号': headers.indexOf('快递单号'),
-                    '物流企业名称': headers.indexOf('物流企业名称')
-                };
-                
-                addLog(`A表格列索引: ${JSON.stringify(aColIndex)}`, 'info');
-                
-                // 填充数据
-                for (let i = 1; i < processedData.length; i++) {
-                    const aRow = processedData[i];
-                    const cRow = [];
-                    
-                    // 订单编号 (C表格A列 <- A表格A列)
-                    cRow.push(aRow[aColIndex['订单编号']] || '');
-                    
-                    // 订单日期 (C表格B列 <- A表格B列，已转换)
-                    cRow.push(aRow[aColIndex['订单日期']] || '');
-                    
-                    // 订单币种 (固定为BRL)
-                    cRow.push('BRL');
-                    
-                    // 订单金额 (C表格D列 <- A表格R列)
-                    cRow.push(aRow[aColIndex['订单金额']] || '');
-                    
-                    // 商品名称 (C表格E列 <- A表格X列)
-                    cRow.push(aRow[aColIndex['商品名称']] || '');
-                    
-                    // 商品数量 (C表格F列 <- A表格G列)
-                    cRow.push(aRow[aColIndex['商品数量']] || '');
-                    
-                    // 商品单价 (C表格G列 = D列/F列)
-                    const amount = Number(aRow[aColIndex['订单金额']]) || 0;
-                    const quantity = Number(aRow[aColIndex['商品数量']]) || 1;
-                    const unitPrice = quantity !== 0 ? (amount / quantity).toFixed(2) : '0.00';
-                    cRow.push(unitPrice);
-                    
-                    // 店铺网址 (C表格H列 <- 用户输入)
-                    cRow.push(shopUrl || '');
-                    
-                    // 快递单号 (C表格I列 <- A表格AT列)
-                    cRow.push(aRow[aColIndex['快递单号']] || '');
-                    
-                    // 物流企业名称 (C表格J列 <- A表格AS列)
-                    cRow.push(aRow[aColIndex['物流企业名称']] || '');
-                    
-                    // 电商平台英文名称 (固定为Mercado)
-                    cRow.push('Mercado');
-                    
-                    cData.push(cRow);
-                }
-                
-                addLog(`C表格数据构建完成: 共${cData.length - 1}条记录`, 'success');
-                
-                // 步骤8-9: 已在上面处理（商品单价计算和店铺网址填入）
-                addLog('步骤8-9: 商品单价计算和店铺网址填写完成', 'success');
-                
-                // 步骤10: 店铺网址已由用户输入，已在上面填入
-                addLog('步骤10: 店铺网址已填入', 'success');
-                
-                // 生成C表格Excel文件
-                addLog('生成C表格Excel文件...', 'info');
-                const newWorkbook = XLSX.utils.book_new();
-                const newWorksheet = XLSX.utils.aoa_to_sheet(cData);
-                
-                // 设置列宽
-                newWorksheet['!cols'] = [
-                    { wch: 15 },  // 订单编号
-                    { wch: 15 },  // 订单日期
-                    { wch: 12 },  // 订单币种
-                    { wch: 15 },  // 订单金额
-                    { wch: 30 },  // 商品名称
-                    { wch: 12 },  // 商品数量
-                    { wch: 12 },  // 商品单价
-                    { wch: 30 },  // 店铺网址
-                    { wch: 20 },  // 快递单号
-                    { wch: 20 },  // 物流企业名称
-                    { wch: 15 }   // 电商平台英文名称
-                ];
-                
-                XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, '订单明细');
-                
-                // 生成Excel文件
-                const excelBuffer = XLSX.write(newWorkbook, { bookType: 'xlsx', type: 'array' });
-                const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                const url = URL.createObjectURL(blob);
-                
-                // 设置下载链接
-                const downloadLink = document.getElementById('downloadLink');
-                const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-                downloadLink.href = url;
-                downloadLink.download = `C表格_${timestamp}.xlsx`;
-                
-                // 显示下载区域
-                downloadSection.classList.add('active');
-                
-                addLog('========== 处理完成 ==========', 'success');
-                addLog(`生成文件: C表格_${timestamp}.xlsx`, 'success');
-                addLog(`总记录数: ${cData.length - 1}条`, 'success');
-                
-                document.getElementById('status').textContent = '处理成功！请点击下方按钮下载文件。';
-                
-            } catch (error) {
-                addLog(`处理出错: ${error.message}`, 'error');
-                addLog(`错误堆栈: ${error.stack}`, 'error');
-                document.getElementById('status').textContent = '处理失败，请查看日志了解详情。';
-                console.error(error);
-            } finally {
+            };
+            
+            reader.onerror = function() {
+                log('文件读取失败', 'error');
                 processBtn.disabled = false;
                 processBtn.textContent = '开始处理';
-            }
+            };
+            
+            reader.readAsArrayBuffer(file);
         }
     </script>
 </body>
