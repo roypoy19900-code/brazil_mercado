@@ -3,403 +3,607 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>订单数据自动化处理工具</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <title>订单表格处理工具1.1</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <style>
-        :root {
-            --primary-color: #4a90e2;
-            --secondary-color: #f5f7fa;
-            --text-color: #333;
-            --border-color: #ddd;
-            --success-color: #28a745;
-            --error-color: #dc3545;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--secondary-color);
-            color: var(--text-color);
+        * {
             margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            padding: 20px;
         }
-
+        
         .container {
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 600px;
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            padding: 40px;
         }
-
+        
         h1 {
+            color: #2d3748;
             text-align: center;
-            color: var(--primary-color);
-            margin-bottom: 25px;
+            margin-bottom: 10px;
+            font-size: 28px;
         }
-
-        .upload-area {
-            border: 2px dashed var(--primary-color);
+        
+        .subtitle {
+            text-align: center;
+            color: #718096;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .upload-section {
+            background: #f7fafc;
+            border: 2px dashed #cbd5e0;
             border-radius: 8px;
             padding: 30px;
             text-align: center;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
             margin-bottom: 20px;
+            transition: all 0.3s;
         }
-
-        .upload-area:hover {
-            background-color: #e8f0fe;
+        
+        .upload-section:hover {
+            border-color: #667eea;
+            background: #edf2f7;
         }
-
-        .upload-area p {
-            margin: 0;
-            font-size: 1.1em;
-            color: var(--primary-color);
+        
+        .upload-section.dragover {
+            border-color: #667eea;
+            background: #e6fffa;
         }
-
-        #file-input {
+        
+        #fileInput {
             display: none;
         }
-
-        .input-group {
-            margin-bottom: 20px;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            box-sizing: border-box;
-            font-size: 1em;
-        }
-
-        .btn {
-            display: block;
-            width: 100%;
-            padding: 12px;
-            background-color: var(--primary-color);
+        
+        .upload-btn {
+            background: #667eea;
             color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 1.1em;
+            padding: 12px 30px;
+            border-radius: 6px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            display: inline-block;
+            font-weight: 500;
+            transition: background 0.3s;
         }
-
-        .btn:hover {
-            background-color: #357abd;
+        
+        .upload-btn:hover {
+            background: #5a67d8;
         }
-
-        .btn:disabled {
-            background-color: #ccc;
+        
+        .file-info {
+            margin-top: 15px;
+            color: #4a5568;
+            font-size: 14px;
+        }
+        
+        .input-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #fffaf0;
+            border-left: 4px solid #ed8936;
+            border-radius: 4px;
+        }
+        
+        .input-section label {
+            display: block;
+            color: #2d3748;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .input-section input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .input-section input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .process-btn {
+            width: 100%;
+            background: #48bb78;
+            color: white;
+            padding: 14px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: background 0.3s;
+        }
+        
+        .process-btn:hover:not(:disabled) {
+            background: #38a169;
+        }
+        
+        .process-btn:disabled {
+            background: #cbd5e0;
             cursor: not-allowed;
         }
-
-        .log-container {
-            margin-top: 25px;
-            border-top: 1px solid var(--border-color);
-            padding-top: 20px;
-        }
-
-        #log-output {
-            background-color: #f8f9fa;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            padding: 15px;
-            height: 200px;
+        
+        .log-section {
+            margin-top: 30px;
+            background: #1a202c;
+            border-radius: 8px;
+            padding: 20px;
+            max-height: 400px;
             overflow-y: auto;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.9em;
-            white-space: pre-wrap;
         }
-
+        
+        .log-title {
+            color: #e2e8f0;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .clear-log {
+            background: transparent;
+            color: #a0aec0;
+            border: 1px solid #4a5568;
+            padding: 4px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .clear-log:hover {
+            background: #2d3748;
+            color: #e2e8f0;
+        }
+        
+        .log-content {
+            font-family: "Courier New", monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            color: #a0aec0;
+        }
+        
         .log-entry {
-            margin-bottom: 5px;
+            margin: 4px 0;
+            padding: 2px 0;
         }
-
-        .log-info { color: var(--text-color); }
-        .log-success { color: var(--success-color); font-weight: bold; }
-        .log-error { color: var(--error-color); font-weight: bold; }
-
+        
+        .log-time {
+            color: #718096;
+        }
+        
+        .log-info {
+            color: #63b3ed;
+        }
+        
+        .log-success {
+            color: #68d391;
+        }
+        
+        .log-error {
+            color: #fc8181;
+        }
+        
+        .download-section {
+            margin-top: 20px;
+            text-align: center;
+            display: none;
+        }
+        
+        .download-btn {
+            background: #4299e1;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+        
+        .download-btn:hover {
+            background: #3182ce;
+        }
+        
         .progress-bar {
             width: 100%;
-            height: 5px;
-            background-color: var(--secondary-color);
-            border-radius: 5px;
-            margin-top: 10px;
+            height: 4px;
+            background: #e2e8f0;
+            border-radius: 2px;
+            margin: 20px 0;
             overflow: hidden;
             display: none;
         }
-
-        .progress-bar-fill {
+        
+        .progress-fill {
             height: 100%;
-            background-color: var(--primary-color);
+            background: #667eea;
             width: 0%;
-            transition: width 0.3s ease;
+            transition: width 0.3s;
+        }
+        
+        .status-text {
+            text-align: center;
+            color: #4a5568;
+            font-size: 14px;
+            margin: 10px 0;
+            min-height: 20px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>订单数据自动化处理工具</h1>
-
-        <div id="upload-area" class="upload-area">
-            <p>点击或拖拽文件到此处上传A表格</p>
-            <input type="file" id="file-input" accept=".xlsx, .xls">
-        </div>
-
-        <div class="input-group">
-            <label for="shop-url">店铺网址 (用于第10步)</label>
-            <input type="text" id="shop-url" placeholder="请输入店铺网址">
-        </div>
-
-        <button id="process-btn" class="btn" disabled>开始处理</button>
+        <h1>订单表格处理工具</h1>
+        <p class="subtitle">上传A表格，自动按照执行步骤生成C表格</p>
         
-        <div class="progress-bar" id="progress-bar">
-            <div class="progress-bar-fill" id="progress-bar-fill"></div>
+        <div class="upload-section" id="dropZone">
+            <input type="file" id="fileInput" accept=".xlsx,.xls" />
+            <label for="fileInput" class="upload-btn">选择A表格文件</label>
+            <p style="margin-top: 10px; color: #718096; font-size: 13px;">或拖拽文件到此处</p>
+            <div class="file-info" id="fileInfo"></div>
         </div>
-
-        <div class="log-container">
-            <h3>运行日志</h3>
-            <div id="log-output"></div>
-            <button id="clear-log-btn" class="btn" style="margin-top: 10px; background-color: #6c757d;">清空日志</button>
+        
+        <div class="input-section">
+            <label for="shopUrl">店铺网址（第10步使用，可选）：</label>
+            <input type="text" id="shopUrl" placeholder="例如：https://www.mercadolivre.com.br/loja/xxx" />
+        </div>
+        
+        <button class="process-btn" id="processBtn" disabled>开始处理</button>
+        
+        <div class="progress-bar" id="progressBar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <div class="status-text" id="statusText"></div>
+        
+        <div class="download-section" id="downloadSection">
+            <a href="#" class="download-btn" id="downloadLink" download>下载处理后的C表格</a>
+        </div>
+        
+        <div class="log-section">
+            <div class="log-title">
+                <span>运行日志</span>
+                <button class="clear-log" id="clearLog">清空</button>
+            </div>
+            <div class="log-content" id="logContent"></div>
         </div>
     </div>
-
+    
     <script>
-        const uploadArea = document.getElementById('upload-area');
-        const fileInput = document.getElementById('file-input');
-        const processBtn = document.getElementById('process-btn');
-        const logOutput = document.getElementById('log-output');
-        const progressBar = document.getElementById('progress-bar');
-        const progressBarFill = document.getElementById('progress-bar-fill');
-        const clearLogBtn = document.getElementById('clear-log-btn');
-
-        let uploadedFile = null;
-
-        // --- 日志系统 ---
-        function log(message, type = 'info') {
-            const entry = document.createElement('div');
-            entry.className = `log-entry log-${type}`;
-            const timestamp = new Date().toLocaleTimeString();
-            entry.textContent = `[${timestamp}] ${message}`;
-            logOutput.appendChild(entry);
-            logOutput.scrollTop = logOutput.scrollHeight;
-        }
-
-        function clearLog() {
-            logOutput.innerHTML = '';
-        }
-
-        // --- 文件上传处理 ---
-        uploadArea.addEventListener('click', () => fileInput.click());
+        // 日志系统
+        const Logger = {
+            logs: [],
+            
+            add(message, type = 'info') {
+                const timestamp = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+                const logEntry = { time: timestamp, message, type };
+                this.logs.push(logEntry);
+                
+                const logContent = document.getElementById('logContent');
+                const entryDiv = document.createElement('div');
+                entryDiv.className = 'log-entry';
+                
+                let colorClass = 'log-info';
+                if (type === 'success') colorClass = 'log-success';
+                if (type === 'error') colorClass = 'log-error';
+                
+                entryDiv.innerHTML = `<span class="log-time">[${timestamp}]</span> <span class="${colorClass}">${message}</span>`;
+                logContent.appendChild(entryDiv);
+                logContent.scrollTop = logContent.scrollHeight;
+            },
+            
+            clear() {
+                this.logs = [];
+                document.getElementById('logContent').innerHTML = '';
+            }
+        };
         
-        uploadArea.addEventListener('dragover', (e) => {
+        // 全局变量
+        let uploadedFile = null;
+        let workbookData = null;
+        
+        // 文件上传处理
+        const fileInput = document.getElementById('fileInput');
+        const dropZone = document.getElementById('dropZone');
+        const fileInfo = document.getElementById('fileInfo');
+        const processBtn = document.getElementById('processBtn');
+        
+        fileInput.addEventListener('change', handleFileSelect);
+        
+        dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
-            uploadArea.style.backgroundColor = '#e8f0fe';
+            dropZone.classList.add('dragover');
         });
-
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.style.backgroundColor = 'transparent';
+        
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
         });
-
-        uploadArea.addEventListener('drop', (e) => {
+        
+        dropZone.addEventListener('drop', (e) => {
             e.preventDefault();
-            uploadArea.style.backgroundColor = 'transparent';
-            if (e.dataTransfer.files.length) {
-                handleFile(e.dataTransfer.files[0]);
+            dropZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileSelect({ target: fileInput });
             }
         });
-
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length) {
-                handleFile(e.target.files[0]);
-            }
-        });
-
-        function handleFile(file) {
-            if (file) {
-                uploadedFile = file;
-                log(`文件已选择: ${file.name}`, 'success');
-                processBtn.disabled = false;
-            }
-        }
-
-        // --- 核心处理逻辑 ---
-        processBtn.addEventListener('click', async () => {
-            if (!uploadedFile) return;
-
-            const shopUrl = document.getElementById('shop-url').value.trim();
-            if (!shopUrl) {
-                log('错误：请输入店铺网址。', 'error');
+        
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            if (!file.name.match(/\.(xlsx|xls)$/i)) {
+                Logger.add('错误：请选择Excel文件（.xlsx或.xls）', 'error');
                 return;
             }
-
-            processBtn.disabled = true;
-            progressBar.style.display = 'block';
-            progressBarFill.style.width = '10%';
-            clearLog();
-            log('开始处理文件...');
-
+            
+            uploadedFile = file;
+            fileInfo.textContent = `已选择：${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
+            processBtn.disabled = false;
+            Logger.add(`文件已加载：${file.name}`, 'success');
+        }
+        
+        // 处理按钮点击
+        processBtn.addEventListener('click', async () => {
+            if (!uploadedFile) {
+                Logger.add('请先上传A表格文件', 'error');
+                return;
+            }
+            
             try {
-                const data = await uploadedFile.arrayBuffer();
-                const workbook = XLSX.read(data);
+                processBtn.disabled = true;
+                document.getElementById('progressBar').style.display = 'block';
+                document.getElementById('downloadSection').style.display = 'none';
+                
+                Logger.add('========== 开始处理 ==========', 'info');
+                updateProgress(0, '读取文件...');
+                
+                // 读取Excel文件
+                const arrayBuffer = await uploadedFile.arrayBuffer();
+                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                
+                Logger.add('文件读取成功', 'success');
+                updateProgress(10, '解析数据...');
+                
+                // 获取第一个工作表
                 const sheetName = workbook.SheetNames[0];
-                let worksheet = workbook.Sheets[sheetName];
-
-                log('步骤 1: 正在删除前5行...');
-                // 1. 删除前5行
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
-                const processedData = jsonData.slice(5);
-                log(`步骤 1 完成。剩余 ${processedData.length} 行数据。`);
-                progressBarFill.style.width = '20%';
-
-                log('步骤 2: 正在重命名列...');
-                // 2. 重命名列
-                const headers = processedData[0];
-                const headerMap = {
-                    'N.º de venda': '订单编号',
-                    'Unidades': '商品数量',
-                    'Total (BRL)': '订单金额',
-                    'Data da venda': '订单日期',
-                    'Transportador': '物流企业名称',
-                    'Número de rastreamento': '快递单号',
-                    'Título do anúncio': '商品名称'
-                };
-                const newHeaders = headers.map(h => headerMap[h] || h);
-                processedData[0] = newHeaders;
-                log('步骤 2 完成。');
-                progressBarFill.style.width = '30%';
-
-                log('步骤 3: 正在筛选并删除无效行...');
-                // 3. 筛选并删除
-                const colIndex = {};
-                newHeaders.forEach((h, i) => colIndex[h] = i);
-
-                const initialCount = processedData.length;
-                const filteredData = processedData.filter((row, index) => {
-                    if (index === 0) return true; // 保留表头
-
-                    const qty = parseFloat(row[colIndex['商品数量']]);
-                    const amount = parseFloat(row[colIndex['订单金额']]);
-                    const tracking = String(row[colIndex['快递单号']]).trim();
-                    const status = String(row[colIndex['Estado']]).trim();
-
-                    if ((!qty && qty !== 0) || qty === 0) return false;
-                    if ((!amount && amount !== 0) || amount === 0) return false;
-                    if (tracking === '0' || tracking === '') return false;
-                    if (status !== 'Entregue') return false;
-
-                    return true;
-                });
-                const deletedCount = initialCount - filteredData.length;
-                log(`步骤 3 完成。删除了 ${deletedCount} 行无效数据。`);
-                progressBarFill.style.width = '40%';
-
-                log('步骤 4: 正在处理订单编号...');
-                // 4. 处理订单编号 (模拟B.xlsx函数)
-                const orderCount = {};
-                filteredData.forEach((row, index) => {
-                    if (index === 0) return;
-                    const orderId = row[colIndex['订单编号']];
-                    if (orderCount[orderId]) {
-                        orderCount[orderId]++;
-                        row[colIndex['订单编号']] = `${orderId}-${orderCount[orderId]}`;
-                    } else {
-                        orderCount[orderId] = 0;
-                    }
-                });
-                log('步骤 4 完成。');
-                progressBarFill.style.width = '50%';
-
-                log('步骤 5: 正在转换日期格式...');
-                // 5. 转换日期格式
-                const monthMap = {
-                    'janeiro': '01', 'fevereiro': '02', 'março': '03', 'abril': '04',
-                    'maio': '05', 'junho': '06', 'julho': '07', 'agosto': '08',
-                    'setembro': '09', 'outubro': '10', 'novembro': '11', 'dezembro': '12'
-                };
-                filteredData.forEach((row, index) => {
-                    if (index === 0) return;
-                    const dateStr = String(row[colIndex['订单日期']]);
-                    const dateRegex = /(\d{1,2}) de ([a-z]+) de (\d{4})/;
-                    const match = dateStr.match(dateRegex);
-                    if (match) {
-                        const day = match[1].padStart(2, '0');
-                        const month = monthMap[match[2]];
-                        const year = match[3];
-                        row[colIndex['订单日期']] = `${year}/${month}/${day}`;
-                    }
-                });
-                log('步骤 5 完成。');
-                progressBarFill.style.width = '60%';
-
-                log('步骤 6-9: 正在生成C表格...');
-                // 6-9. 生成C表格
-                const cHeaders = ['订单编号', '订单日期', '订单币种', '订单金额', '商品名称', '商品数量', '商品单价', '店铺网址', '快递单号', '物流企业名称', '电商平台英文名称'];
-                const cData = [cHeaders];
+                const worksheet = workbook.Sheets[sheetName];
                 
-                filteredData.forEach((row, index) => {
-                    if (index === 0) return;
-                    const cRow = [];
-                    cRow[0] = row[colIndex['订单编号']]; // A
-                    cRow[1] = row[colIndex['订单日期']]; // B
-                    cRow[2] = 'BRL'; // C
-                    cRow[3] = row[colIndex['订单金额']]; // D
-                    cRow[4] = row[colIndex['商品名称']]; // E
-                    cRow[5] = row[colIndex['商品数量']]; // F
-                    // G: 商品单价 = D/F
-                    const amountVal = parseFloat(cRow[3]) || 0;
-                    const qtyVal = parseFloat(cRow[5]) || 1;
-                    cRow[6] = (amountVal / qtyVal).toFixed(2); 
-                    cRow[7] = shopUrl; // H
-                    cRow[8] = row[colIndex['快递单号']]; // I
-                    cRow[9] = row[colIndex['物流企业名称']]; // J
-                    cRow[10] = 'Mercado'; // K
-                    cData.push(cRow);
-                });
-                log('步骤 6-9 完成。');
-                progressBarFill.style.width = '80%';
-
-                log('新增步骤: 正在顶部插入空白行...');
-                // 新增步骤：在第1行上方添加空白行
-                cData.unshift(new Array(cHeaders.length).fill(""));
-                log('新增步骤完成。');
-                progressBarFill.style.width = '90%';
-
-                log('正在生成最终文件...');
-                const newWorksheet = XLSX.utils.aoa_to_sheet(cData);
-                const newWorkbook = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, '订单明细');
+                // 转换为JSON数组（保留原始格式）
+                const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
                 
-                XLSX.writeFile(newWorkbook, 'C_processed.xlsx');
-                log('处理完成！文件已下载。', 'success');
-                progressBarFill.style.width = '100%';
-
+                Logger.add(`原始数据行数：${rawData.length}`, 'info');
+                
+                // 执行处理步骤
+                let processedData = await processData(rawData);
+                
+                // 生成C表格
+                updateProgress(90, '生成C表格...');
+                const cWorkbook = generateCTable(processedData);
+                
+                // 导出文件
+                updateProgress(100, '准备下载...');
+                const wbout = XLSX.write(cWorkbook, { bookType: 'xlsx', type: 'array' });
+                const blob = new Blob([wbout], { type: 'application/octet-stream' });
+                const url = URL.createObjectURL(blob);
+                
+                const downloadLink = document.getElementById('downloadLink');
+                downloadLink.href = url;
+                downloadLink.download = `C表格_处理后_${new Date().getTime()}.xlsx`;
+                
+                document.getElementById('downloadSection').style.display = 'block';
+                Logger.add('处理完成！可以下载C表格了', 'success');
+                
             } catch (error) {
-                log(`处理出错: ${error.message}`, 'error');
+                Logger.add(`处理出错：${error.message}`, 'error');
                 console.error(error);
             } finally {
                 processBtn.disabled = false;
-                progressBar.style.display = 'none';
-                progressBarFill.style.width = '0%';
+                setTimeout(() => {
+                    document.getElementById('progressBar').style.display = 'none';
+                }, 1000);
             }
         });
-
-        clearLogBtn.addEventListener('click', clearLog);
-
+        
+        // 更新进度条
+        function updateProgress(percent, status) {
+            document.getElementById('progressFill').style.width = percent + '%';
+            document.getElementById('statusText').textContent = status;
+        }
+        
+        // 核心处理逻辑
+        async function processData(rawData) {
+            Logger.add('步骤1：删除前5行...', 'info');
+            // 步骤1：删除前5行（索引0-4），第6行（索引5）是表头
+            let data = rawData.slice(5);
+            Logger.add(`删除后剩余行数：${data.length}`, 'success');
+            
+            Logger.add('步骤2：列名映射...', 'info');
+            // 步骤2：列名已经在代码中硬编码映射，不需要修改表头
+            // A(0)=订单编号, B(1)=订单日期, C(2)=Estado, G(6)=商品数量, R(17)=订单金额
+            // X(23)=商品名称, AS(44)=物流企业名称, AT(45)=快递单号
+            
+            Logger.add('步骤3：筛选并删除无效行...', 'info');
+            // 步骤3：筛选条件
+            const filteredData = [];
+            let deletedCount = 0;
+            
+            for (let i = 1; i < data.length; i++) { // 跳过表头
+                const row = data[i];
+                const unidades = parseFloat(row[6]) || 0; // G列
+                const total = parseFloat(row[17]) || 0;   // R列
+                const trackingNumber = String(row[45] || '').trim(); // AT列
+                const estado = String(row[2] || '').trim(); // C列
+                
+                // 筛选条件
+                if (unidades === 0) {
+                    deletedCount++;
+                    continue;
+                }
+                if (total === 0) {
+                    deletedCount++;
+                    continue;
+                }
+                if (trackingNumber === '0' || trackingNumber === '') {
+                    deletedCount++;
+                    continue;
+                }
+                if (estado !== 'Entregue') {
+                    deletedCount++;
+                    continue;
+                }
+                
+                filteredData.push(row);
+            }
+            
+            Logger.add(`删除无效行：${deletedCount}行，保留：${filteredData.length}行`, 'success');
+            data = [data[0], ...filteredData]; // 重新加上表头
+            
+            Logger.add('步骤4：处理订单编号（应用B表格函数）...', 'info');
+            // 步骤4：应用B表格的函数逻辑
+            // 函数：IF(COUNTIF(A$2:A2,A2)>1,A2&"-"&COUNTIF(A$2:A2,A2)-1,A2)
+            const orderCounts = {};
+            for (let i = 1; i < data.length; i++) {
+                const orderId = String(data[i][0] || '').trim();
+                if (!orderCounts[orderId]) {
+                    orderCounts[orderId] = 0;
+                }
+                orderCounts[orderId]++;
+                
+                if (orderCounts[orderId] > 1) {
+                    data[i][0] = `${orderId}-${orderCounts[orderId] - 1}`;
+                }
+            }
+            Logger.add('订单编号处理完成', 'success');
+            
+            Logger.add('步骤5：转换订单日期格式...', 'info');
+            // 步骤5：葡萄牙语日期转标准格式
+            // 例如："28 de fevereiro de 2026 22:48 hs." -> "2026/02/28"
+            const monthMap = {
+                'janeiro': '01', 'fevereiro': '02', 'março': '03', 'abril': '04',
+                'maio': '05', 'junho': '06', 'julho': '07', 'agosto': '08',
+                'setembro': '09', 'outubro': '10', 'novembro': '11', 'dezembro': '12'
+            };
+            
+            for (let i = 1; i < data.length; i++) {
+                const dateStr = String(data[i][1] || '').trim();
+                if (dateStr) {
+                    const convertedDate = convertPortugueseDate(dateStr, monthMap);
+                    data[i][1] = convertedDate;
+                }
+            }
+            Logger.add('日期格式转换完成', 'success');
+            
+            Logger.add('步骤6-7：准备C表格数据...', 'info');
+            // 步骤6-7：构建C表格数据
+            const shopUrl = document.getElementById('shopUrl').value.trim();
+            
+            const cData = [];
+            // C表格表头
+            cData.push(['订单编号', '订单日期', '订单币种', '订单金额', '商品名称', '商品数量', '商品单价', '店铺网址', '快递单号', '物流企业名称', '电商平台英文名称']);
+            
+            for (let i = 1; i < data.length; i++) {
+                const row = data[i];
+                const orderId = row[0];
+                const orderDate = row[1];
+                const quantity = parseFloat(row[6]) || 0; // G列
+                const amount = parseFloat(row[17]) || 0;  // R列
+                const productName = row[23] || '';        // X列
+                const trackingNum = row[45] || '';        // AT列
+                const carrier = row[44] || '';            // AS列
+                
+                // 计算商品单价
+                const unitPrice = quantity > 0 ? (amount / quantity).toFixed(2) : '0.00';
+                
+                cData.push([
+                    orderId,           // 订单编号
+                    orderDate,         // 订单日期
+                    'BRL',             // 订单币种
+                    amount,            // 订单金额
+                    productName,       // 商品名称
+                    quantity,          // 商品数量
+                    parseFloat(unitPrice), // 商品单价
+                    shopUrl,           // 店铺网址
+                    trackingNum,       // 快递单号
+                    carrier,           // 物流企业名称
+                    'Mercado'          // 电商平台英文名称
+                ]);
+            }
+            
+            Logger.add(`C表格数据行数：${cData.length - 1}`, 'success');
+            return cData;
+        }
+        
+        // 葡萄牙语日期转换
+        function convertPortugueseDate(dateStr, monthMap) {
+            try {
+                // 匹配格式：28 de fevereiro de 2026 22:48 hs.
+                const match = dateStr.match(/(\d+)\s+de\s+(\w+)\s+de\s+(\d{4})/);
+                if (match) {
+                    const day = match[1].padStart(2, '0');
+                    const monthName = match[2].toLowerCase();
+                    const year = match[3];
+                    const month = monthMap[monthName] || '01';
+                    return `${year}/${month}/${day}`;
+                }
+            } catch (e) {
+                Logger.add(`日期转换失败：${dateStr}`, 'error');
+            }
+            return dateStr;
+        }
+        
+        // 生成C表格工作簿
+        function generateCTable(cData) {
+            const wb = XLSX.utils.book_new();
+            const             const cData.unshift([]);
+ws = XLSX.utils.aoa_to_sheet(cData);
+            
+            // 设置列宽
+            ws['!cols'] = [
+                { wch: 20 }, // 订单编号
+                { wch: 15 }, // 订单日期
+                { wch: 12 }, // 订单币种
+                { wch: 15 }, // 订单金额
+                { wch: 40 }, // 商品名称
+                { wch: 12 }, // 商品数量
+                { wch: 12 }, // 商品单价
+                { wch: 35 }, // 店铺网址
+                { wch: 35 }, // 快递单号
+                { wch: 20 }, // 物流企业名称
+                { wch: 15 }  // 电商平台英文名称
+            ];
+            
+            XLSX.utils.book_append_sheet(wb, ws, '订单明细');
+            return wb;
+        }
+        
+        // 清空日志
+        document.getElementById('clearLog').addEventListener('click', () => {
+            Logger.clear();
+            Logger.add('日志已清空', 'info');
+        });
+        
+        // 初始化
+        Logger.add('系统已就绪，请上传A表格文件', 'info');
     </script>
 </body>
 </html>
