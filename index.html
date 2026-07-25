@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>A表格转C表格处理工具1.4</title>
+    <title>A表格转C表格处理工具 (GitHub版)</title>
     <!-- 引入 SheetJS -->
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <style>
@@ -11,9 +11,6 @@
             --primary-color: #667eea;
             --secondary-color: #764ba2;
             --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --text-color: #333;
-            --log-bg: #1e1e1e;
-            --log-text: #00ff00;
         }
 
         body {
@@ -25,119 +22,86 @@
             align-items: center;
             margin: 0;
             padding: 20px;
-            color: var(--text-color);
+            box-sizing: border-box;
         }
 
         .container {
             background: white;
-            padding: 30px;
+            width: 100%;
+            max-width: 900px;
             border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            width: 100%;
-            max-width: 800px;
+            padding: 30px;
             text-align: center;
         }
 
-        h1 {
-            margin-top: 0;
-            color: #333;
-            font-size: 24px;
-        }
+        h1 { color: #333; margin-bottom: 10px; }
+        p.subtitle { color: #666; margin-bottom: 30px; }
 
+        /* 上传区域 */
         .upload-area {
-            border: 2px dashed #cbd5e0;
+            border: 2px dashed #ccc;
             border-radius: 8px;
             padding: 30px;
-            margin: 20px 0;
             cursor: pointer;
             transition: all 0.3s;
-            position: relative;
+            margin-bottom: 20px;
+            background: #f9f9f9;
         }
-
-        .upload-area:hover {
-            border-color: var(--primary-color);
-            background-color: #f7fafc;
-        }
-
-        input[type="file"] {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            opacity: 0;
-            cursor: pointer;
-        }
-
-        .btn {
-            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+        .upload-area:hover { border-color: var(--primary-color); background: #f0f4ff; }
+        
+        input[type="file"] { display: none; }
+        
+        .btn-main {
+            background: var(--bg-gradient);
             color: white;
             border: none;
-            padding: 12px 30px;
+            padding: 15px 40px;
+            font-size: 18px;
             border-radius: 6px;
-            font-size: 16px;
             cursor: pointer;
-            transition: transform 0.1s;
-            margin-top: 10px;
             width: 100%;
+            margin-top: 10px;
+            transition: opacity 0.3s;
         }
-
-        .btn:active {
-            transform: scale(0.98);
-        }
-
-        .btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
+        .btn-main:disabled { background: #ccc; cursor: not-allowed; }
+        .btn-main:hover:not(:disabled) { opacity: 0.9; }
 
         .input-group {
-            margin-bottom: 20px;
             text-align: left;
+            margin: 20px 0;
         }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            font-size: 14px;
-        }
-
+        .input-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #444; }
         .input-group input {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box; /* 确保padding不撑大宽度 */
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
         }
 
-        #log-container {
-            background: var(--log-bg);
-            color: var(--log-text);
+        /* 日志区域 */
+        .log-container {
+            background: #1e1e1e;
+            color: #00ff00;
             font-family: 'Consolas', monospace;
+            text-align: left;
             padding: 15px;
             border-radius: 6px;
             height: 200px;
             overflow-y: auto;
-            text-align: left;
             margin-top: 20px;
-            font-size: 12px;
-            border: 1px solid #444;
-        }
-
-        .status-msg {
-            margin-top: 10px;
             font-size: 14px;
-            color: #666;
+            border: 1px solid #333;
         }
 
         .download-section {
             margin-top: 20px;
             display: none; /* 默认隐藏 */
         }
-
-        .download-btn {
-            background: #48bb78;
+        .btn-download {
+            background: #4CAF50;
             color: white;
             text-decoration: none;
             padding: 12px 30px;
@@ -151,196 +115,183 @@
 
 <div class="container">
     <h1>A表格转C表格处理工具</h1>
-    <p style="font-size: 14px; color: #666;">上传A表格文件，自动按照执行步骤生成C表格</p>
+    <p class="subtitle">上传A表格文件，自动按照执行步骤生成C表格</p>
 
-    <!-- 文件上传区域 -->
-    <div class="upload-area" id="drop-zone">
-        <input type="file" id="file-input" accept=".xlsx, .xls, .csv">
-        <p id="file-name">点击或拖拽上传 A表格 (.xlsx)</p>
+    <!-- 1. 文件上传 -->
+    <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+        <span id="fileName">点击此处上传 A表格 (.xlsx)</span>
+        <input type="file" id="fileInput" accept=".xlsx, .xls" onchange="handleFileSelect(this)">
     </div>
 
-    <!-- 用户输入区域 (对应第10步) -->
+    <!-- 2. 用户输入 (第10步使用) -->
     <div class="input-group">
-        <label for="shop-url">店铺网址 (第10步使用)：</label>
-        <input type="text" id="shop-url" placeholder="请输入店铺网址，可选填">
+        <label for="shopUrl">店铺网址 (第10步使用):</label>
+        <input type="text" id="shopUrl" placeholder="请输入店铺网址，例如: https://..." value="123123">
     </div>
 
-    <!-- 操作按钮 -->
-    <button id="process-btn" class="btn" disabled>开始处理</button>
+    <!-- 3. 开始按钮 -->
+    <button id="processBtn" class="btn-main" onclick="startProcessing()" disabled>开始处理</button>
 
-    <!-- 运行日志 -->
-    <div id="log-container">等待操作...</div>
+    <!-- 4. 运行日志 -->
+    <div class="log-container" id="logBox">等待操作...</div>
 
-    <!-- 下载区域 -->
-    <div class="download-section" id="download-section">
-        <p class="status-msg">处理成功！请点击下方按钮下载。</p>
-        <a id="download-link" class="download-btn" href="#" download="C表格_处理后.xlsx">下载C表格</a>
+    <!-- 5. 下载区域 -->
+    <div class="download-section" id="downloadSection">
+        <p>处理完成！请点击下方按钮下载。</p>
+        <a id="downloadLink" class="btn-download" href="#" download="C表格_处理后.xlsx">下载C表格</a>
     </div>
 </div>
 
 <script>
-    // 变量存储
-    let workbook = null;
-    let jsonData = [];
-    const logContainer = document.getElementById('log-container');
-    const fileInput = document.getElementById('file-input');
-    const fileNameDisplay = document.getElementById('file-name');
-    const processBtn = document.getElementById('process-btn');
-    const downloadSection = document.getElementById('download-section');
-    const downloadLink = document.getElementById('download-link');
-    const shopUrlInput = document.getElementById('shop-url');
+    // 配置部分
+    const TEMPLATE_URL = './C表格.xlsx'; // GitHub上的C表格路径
+    let uploadedWorkbook = null; // 存储用户上传的A表格
+    let uploadedFileName = "A表格";
 
-    // 日志函数
-    function addLog(message, type = 'info') {
+    // 日志功能
+    function log(msg, type = 'INFO') {
+        const logBox = document.getElementById('logBox');
         const time = new Date().toLocaleTimeString();
-        const prefix = type === 'error' ? '[ERROR]' : (type === 'warning' ? '[WARNING]' : '[INFO]');
-        const logEntry = document.createElement('div');
-        logEntry.textContent = `[${time}] ${prefix} ${message}`;
-        if (type === 'error') logEntry.style.color = '#ff4d4d';
-        if (type === 'warning') logEntry.style.color = '#ffd700';
-        
-        logContainer.appendChild(logEntry);
-        logContainer.scrollTop = logContainer.scrollHeight; // 自动滚动到底部
+        const color = type === 'ERROR' ? '#ff4444' : '#00ff00';
+        logBox.innerHTML += `<div style="color:${color}">[${time}] [${type}] ${msg}</div>`;
+        logBox.scrollTop = logBox.scrollHeight;
     }
 
-    // 监听文件上传
-    fileInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
+    // 1. 处理文件选择
+    function handleFileSelect(input) {
+        const file = input.files[0];
         if (!file) return;
 
-        fileNameDisplay.textContent = `已选择: ${file.name}`;
-        addLog(`文件已加载: ${file.name}`);
-        
+        uploadedFileName = file.name.replace(/\.[^/.]+$/, ""); // 去除后缀
+        document.getElementById('fileName').innerText = `已选择: ${file.name}`;
+        document.getElementById('processBtn').disabled = false;
+        log(`文件已加载: ${file.name}`);
+
         const reader = new FileReader();
         reader.onload = function(e) {
-            try {
-                const data = new Uint8Array(e.target.result);
-                workbook = XLSX.read(data, {type: 'array'});
-                
-                // 默认读取第一个工作表
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                
-                // 转换为JSON (header:1 表示生成二维数组，方便按列号访问)
-                jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
-                
-                addLog(`解析成功，共读取 ${jsonData.length} 行数据 (包含表头)`);
-                processBtn.disabled = false;
-                downloadSection.style.display = 'none';
-            } catch (err) {
-                addLog(`文件解析失败: ${err.message}`, 'error');
-                console.error(err);
-            }
+            const data = new Uint8Array(e.target.result);
+            uploadedWorkbook = XLSX.read(data, {type: 'array'});
+            log("A表格解析成功，等待处理...");
         };
         reader.readAsArrayBuffer(file);
-    });
+    }
 
-    // 核心处理逻辑
-    processBtn.addEventListener('click', function() {
-        if (!jsonData || jsonData.length === 0) {
-            addLog('没有数据可处理', 'error');
+    // 2. 核心处理逻辑
+    async function startProcessing() {
+        const btn = document.getElementById('processBtn');
+        const shopUrl = document.getElementById('shopUrl').value;
+        
+        if (!uploadedWorkbook) {
+            alert("请先上传A表格！");
             return;
         }
 
-        addLog('--- 开始执行处理步骤 ---');
-        processBtn.disabled = true;
-        processBtn.textContent = '处理中...';
+        btn.disabled = true;
+        btn.innerText = "正在处理中...";
+        log("--- 开始执行处理步骤 ---");
 
-        // 使用 setTimeout 让UI有机会渲染日志，避免卡顿感
-        setTimeout(() => {
-            try {
-                executeSteps();
-                processBtn.textContent = '开始处理';
-                processBtn.disabled = false;
-            } catch (err) {
-                addLog(`处理过程中发生严重错误: ${err.message}`, 'error');
-                processBtn.textContent = '开始处理';
-                processBtn.disabled = false;
+        try {
+            // 第一步：获取 C表格 (模板)
+            log("正在从服务器获取 C表格 模板...");
+            const templateResponse = await fetch(TEMPLATE_URL);
+            if (!templateResponse.ok) throw new Error("无法下载C表格模板，请检查文件是否存在于GitHub根目录");
+            
+            const templateBuffer = await templateResponse.arrayBuffer();
+            const templateWorkbook = XLSX.read(templateBuffer, {type: 'array'});
+            
+            // 假设都在第一个 Sheet
+            const templateSheetName = templateWorkbook.SheetNames[0];
+            const templateSheet = templateWorkbook.Sheets[templateSheetName];
+            
+            // 将模板转换为二维数组，方便操作
+            // header:1 表示生成二维数组 [[A1, B1...], [A2, B2...]]
+            let cData = XLSX.utils.sheet_to_json(templateSheet, {header: 1});
+            
+            log(`C表格模板加载成功，当前行数: ${cData.length}`);
+
+            // 第二步：处理 A表格 (数据源)
+            const sourceSheetName = uploadedWorkbook.SheetNames[0];
+            const sourceSheet = uploadedWorkbook.Sheets[sourceSheetName];
+            // 同样转为二维数组
+            const aData = XLSX.utils.sheet_to_json(sourceSheet, {header: 1});
+
+            if (aData.length < 2) {
+                throw new Error("A表格似乎没有数据或为空");
             }
-        }, 100);
-    });
 
-    function executeSteps() {
-        // 假设第一行是表头，从第二行开始遍历
-        // 注意：Excel列号与数组索引对应关系 (A=0, B=1 ... AP=41 ... AW=48)
-        const headerRow = jsonData[0]; 
-        let processedCount = 0;
-        let deletedCount = 0;
-        
-        // 准备新的数据容器
-        const newData = [headerRow]; 
+            // 获取表头 (第一行)，用于调试确认列位置
+            const headers = aData[0];
+            // 调试日志：打印第49列(索引48)的表头名称，确认是不是AW列
+            log(`A表格表头检测 - 第49列(AW列)名称为: "${headers[48]}"`); 
 
-        // 获取用户输入的店铺网址 (第10步用)
-        const shopUrl = shopUrlInput.value.trim();
+            let matchCount = 0;
+            let skipCount = 0;
 
-        // 遍历数据行 (跳过表头 index 0)
-        for (let i = 1; i < jsonData.length; i++) {
-            const row = jsonData[i];
-            
-            // 防止空行报错
-            if (!row || row.length === 0) continue;
+            // 第三步：遍历 A表格 进行筛选和填入
+            // 从 i=1 开始，跳过表头
+            for (let i = 1; i < aData.length; i++) {
+                const row = aData[i];
+                
+                // *** 关键筛选逻辑 ***
+                // 获取 AW 列的值 (Excel中 A=0 ... AW=48)
+                // 使用 trim() 去除可能存在的首尾空格
+                const formaEntregaVal = row[48] ? String(row[48]).trim() : "";
 
-            // ==========================================
-            // 模拟《文件执行步骤》
-            // ==========================================
-
-            // 假设前面的步骤（1-9）是一些数据清洗，这里直接进行关键的筛选步骤
-            
-            // 【关键修改点】：检查 AW 列 (索引 48)
-            // Excel列: A(0)... V(21)... AP(41)... AW(48)
-            const colIndex_AW = 48; 
-            const formaEntregaValue = row[colIndex_AW];
-
-            // 筛选逻辑：如果 AW列 的值等于 "Mercado Envios Full"，则删除该行（不加入新数据）
-            // 注意：这里假设是要“剔除”这种类型的数据，如果是保留请反转逻辑
-            if (String(formaEntregaValue).trim() === "Mercado Envios Full") {
-                deletedCount++;
-                // 仅在日志中记录前几条，避免日志过多卡死浏览器
-                if (deletedCount <= 5 || deletedCount % 100 === 0) {
-                    addLog(`删除第 ${i+1} 行: Forma de entrega(AW列) 为 Mercado Envios Full`, 'warning');
+                // 检查是否符合条件
+                if (formaEntregaVal === "Mercado Envios Full") {
+                    // --- 符合筛选条件 ---
+                    
+                    // 【注意】这里需要根据你的实际业务逻辑修改映射关系
+                    // 目前逻辑：直接将A表格的这一整行数据，追加到C表格的末尾
+                    // 如果C表格的列顺序和A不一样，你需要在这里手动赋值，例如：
+                    // const newRow = [];
+                    // newRow[0] = row[0]; // A列填到A列
+                    // newRow[5] = shopUrl; // 将店铺网址填入F列
+                    // cData.push(newRow);
+                    
+                    // 简单模式：直接推入 (假设列结构相似或需要保留原样)
+                    // 为了防止空行报错，确保row是数组
+                    const rowToPush = Array.isArray(row) ? row : [];
+                    
+                    // 如果需要在此处执行“第10步”填入店铺网址
+                    // 假设店铺网址要填在每一行的最后一列，或者指定列（比如第10列，索引9）
+                    // rowToPush[9] = shopUrl; // 举例：填入第J列
+                    
+                    cData.push(rowToPush);
+                    matchCount++;
+                } else {
+                    skipCount++;
                 }
-                continue; // 跳过此行，不添加到结果中
             }
 
-            // ==========================================
-            // 第10步：填入店铺网址
-            // ==========================================
-            // 假设“店铺网址”需要填入某一新列，或者覆盖某一列
-            // 这里演示：在行末尾追加一列，或者根据需求修改特定列
-            // 例如：如果 C表格有一列叫 "Shop URL"，你需要找到它的索引。
-            // 这里简单演示：将该值赋给某个位置，比如 AZ 列 (索引 51) 作为示例
-            // 请根据实际C表格的模板要求修改此处索引
-            const targetColIndex_ShopURL = 51; // 示例：AZ列
-            if (shopUrl) {
-                 // 确保数组长度足够
-                 while(row.length <= targetColIndex_ShopURL) {
-                     row.push("");
-                 }
-                 row[targetColIndex_ShopURL] = shopUrl;
-            }
+            log(`筛选完成。匹配 "Mercado Envios Full": ${matchCount} 行，跳过: ${skipCount} 行。`);
+            log(`正在将数据写入 C表格...`);
 
-            // 将处理后的行加入新数据
-            newData.push(row);
-            processedCount++;
+            // 第四步：生成新的 Excel
+            const newSheet = XLSX.utils.aoa_to_sheet(cData);
+            templateWorkbook.Sheets[templateSheetName] = newSheet;
+
+            // 导出文件
+            const wbout = XLSX.write(templateWorkbook, {bookType:'xlsx', type:'array'});
+            const blob = new Blob([wbout], {type:"application/octet-stream"});
+            const url = URL.createObjectURL(blob);
+
+            // 设置下载链接
+            const dlLink = document.getElementById('downloadLink');
+            dlLink.href = url;
+            dlLink.download = `C表格_处理后_${new Date().getTime()}.xlsx`;
+            
+            document.getElementById('downloadSection').style.display = 'block';
+            log("处理全部完成！文件已生成。");
+
+        } catch (err) {
+            console.error(err);
+            log(`发生错误: ${err.message}`, 'ERROR');
+            alert("处理出错，请查看日志或联系开发者。\n错误信息: " + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "开始处理";
         }
-
-        addLog(`处理完成。保留 ${processedCount} 行，删除 ${deletedCount} 行。`);
-
-        // 生成新的工作簿
-        const newWorkbook = XLSX.utils.book_new();
-        const newWorksheet = XLSX.utils.aoa_to_sheet(newData);
-        
-        // 将工作表添加到工作簿
-        XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, "Sheet1");
-
-        // 生成下载链接
-        const wbout = XLSX.write(newWorkbook, {bookType:'xlsx', type:'array'});
-        const blob = new Blob([wbout], {type:"application/octet-stream"});
-        const url = URL.createObjectURL(blob);
-        
-        downloadLink.href = url;
-        downloadSection.style.display = 'block';
-        addLog('文件已生成，请点击下载。');
     }
 </script>
 
