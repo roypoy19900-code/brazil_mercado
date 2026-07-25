@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>订单表格处理工具2.0</title>
+    <title>巴西美客多订单处理工具2.0</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <style>
         * {
@@ -251,18 +251,18 @@
 </head>
 <body>
     <div class="container">
-        <h1>订单表格处理工具</h1>
-        <p class="subtitle">上传A表格，自动按照执行步骤生成C表格</p>
+        <h1>巴西美客多转化处理工具</h1>
+        <p class="subtitle">上传美客多原始订单表格，自动按照执行步骤生成寻汇模板表格</p>
         
         <div class="upload-section" id="dropZone">
             <input type="file" id="fileInput" accept=".xlsx,.xls" />
-            <label for="fileInput" class="upload-btn">选择A表格文件</label>
+            <label for="fileInput" class="upload-btn">原始订单表格</label>
             <p style="margin-top: 10px; color: #718096; font-size: 13px;">或拖拽文件到此处</p>
             <div class="file-info" id="fileInfo"></div>
         </div>
         
         <div class="input-section">
-            <label for="shopUrl">店铺网址（第10步使用，可选）：</label>
+            <label for="shopUrl">店铺网址（可选）：</label>
             <input type="text" id="shopUrl" placeholder="例如：https://www.mercadolivre.com.br/loja/xxx" />
         </div>
         
@@ -275,7 +275,7 @@
         <div class="status-text" id="statusText"></div>
         
         <div class="download-section" id="downloadSection">
-            <a href="#" class="download-btn" id="downloadLink" download>下载处理后的C表格</a>
+            <a href="#" class="download-btn" id="downloadLink" download>下载处理后的寻汇模板表格</a>
         </div>
         
         <div class="log-section">
@@ -604,7 +604,7 @@
         });
         
         // 初始化
-        Logger.add('系统已就绪，请上传A表格文件', 'info');
+        Logger.add('系统已就绪，请上传美客多原始订单文件', 'info');
     </script>
 </body>
 </html>
