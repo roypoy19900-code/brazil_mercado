@@ -3,268 +3,270 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>A表格</title>
+    <title>A表格转C表格 - 全步骤严格执行版</title>
     <!-- 引入 SheetJS -->
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; margin: 0; }
-        .container { background: white; width: 900px; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #333; margin-bottom: 10px; }
-        .desc { text-align: center; color: #666; margin-bottom: 30px; font-size: 14px; }
+        .container { background: white; width: 900px; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #333; margin-bottom: 10px; }
+        .desc { text-align: center; color: #666; font-size: 0.9em; margin-bottom: 20px; }
         
         /* 上传区域 */
         .upload-area { border: 2px dashed #ccc; padding: 30px; text-align: center; border-radius: 8px; cursor: pointer; transition: 0.3s; margin-bottom: 20px; }
         .upload-area:hover { border-color: #667eea; background: #f9faff; }
         .file-info { margin-top: 10px; font-weight: bold; color: #333; }
 
-        /* 输入框区域 */
+        /* 输入框 */
         .input-group { margin-bottom: 20px; }
-        .input-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #444; }
-        .input-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; font-size: 14px; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        .input-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
 
         /* 按钮 */
-        .btn-process { width: 100%; padding: 15px; background: linear-gradient(to right, #667eea, #764ba2); color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; transition: 0.3s; margin-bottom: 20px; }
-        .btn-process:hover { opacity: 0.9; }
-        .btn-process:disabled { background: #ccc; cursor: not-allowed; }
+        .btn { width: 100%; padding: 12px; background: linear-gradient(to right, #667eea, #764ba2); color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; transition: 0.3s; }
+        .btn:hover { opacity: 0.9; }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        .download-btn { background: #28a745; margin-top: 10px; display: none; }
 
-        .btn-download { display: block; width: 200px; margin: 20px auto; padding: 12px; background: #28a745; color: white; text-align: center; text-decoration: none; border-radius: 5px; font-weight: bold; display: none; }
-        
         /* 日志区域 */
-        .log-container { background: #1e1e1e; color: #00ff00; padding: 15px; border-radius: 5px; height: 300px; overflow-y: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.5; }
-        .log-step { color: #ffff00; font-weight: bold; margin-top: 5px; }
+        .log-container { background: #1e1e1e; color: #00ff00; padding: 15px; border-radius: 4px; height: 300px; overflow-y: auto; font-family: monospace; font-size: 12px; margin-top: 20px; white-space: pre-wrap; }
+        .log-step { color: #ffff00; font-weight: bold; margin-top: 5px; display: block; }
         .log-error { color: #ff4444; }
+        .log-info { color: #00ccff; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>A表格转C表格处理工具</h1>
+    <h2>A表格转C表格处理工具</h2>
     <p class="desc">请确保同目录下有 "A表格.xlsx" (待处理) 和 "C表格.xlsx" (模板)</p>
 
-    <!-- 文件上传 -->
+    <!-- 1. 上传区域 -->
     <div class="upload-area" onclick="document.getElementById('fileInput').click()">
         <p>点击此处上传 A表格.xlsx</p>
-        <input type="file" id="fileInput" accept=".xlsx" style="display: none" onchange="handleFileSelect(this)">
-        <div id="fileName" class="file-info">未选择文件</div>
+        <input type="file" id="fileInput" accept=".xlsx" style="display: none" onchange="handleFileSelect(event)">
+        <div id="fileInfo" class="file-info">未选择文件</div>
     </div>
 
-    <!-- 第10步输入框 -->
+    <!-- 2. 店铺网址输入 (第10步用) -->
     <div class="input-group">
-        <label for="shopUrl">店铺网址 (用于第10步自动填入):</label>
-        <input type="text" id="shopUrl" placeholder="例如: https://shopee.com.br/..." value="">
+        <label>店铺网址 (用于第10步自动填入):</label>
+        <input type="text" id="shopUrl" placeholder="例如: https://mercadolibre.com..." value="15645645">
     </div>
 
-    <button id="processBtn" class="btn-process" onclick="startProcessing()" disabled>开始处理</button>
+    <!-- 3. 开始按钮 -->
+    <button id="startBtn" class="btn" onclick="startProcessing()" disabled>开始处理</button>
+    <button id="downloadBtn" class="btn download-btn" onclick="downloadResult()">下载 C表格</button>
 
-    <!-- 运行日志 -->
+    <!-- 4. 日志显示 -->
     <div class="log-container" id="logBox">等待操作...</div>
-
-    <!-- 下载链接 -->
-    <a id="downloadLink" class="btn-download">下载处理后的C表格</a>
 </div>
 
 <script>
-    let selectedFile = null;
-    
-    // 配置区：请根据实际Excel的列号修改这里
-    // Excel列号从0开始：A=0, B=1 ... AW=48
-    const CONFIG = {
-        col_aw_index: 48, // AW列的索引
-        filter_value: "Mercado Envios Full", // 筛选条件
-        shop_url_col_name: "店铺网址" // C表格中要填入网址的那一列的标题
-    };
+    let workbookA = null; // 存储上传的A表格
+    let workbookC = null; // 存储加载的C模板
+    let resultWorkbook = null; // 最终结果
 
-    function log(msg, type = 'info') {
-        const logBox = document.getElementById('logBox');
+    // 日志辅助函数
+    function log(msg, type = 'normal') {
+        const box = document.getElementById('logBox');
         const time = new Date().toLocaleTimeString();
         let colorClass = '';
         if (type === 'step') colorClass = 'log-step';
         if (type === 'error') colorClass = 'log-error';
+        if (type === 'info') colorClass = 'log-info';
         
-        logBox.innerHTML += `<div class="${colorClass}">[${time}] ${msg}</div>`;
-        logBox.scrollTop = logBox.scrollHeight;
+        box.innerHTML += `<span class="${colorClass}">[${time}] ${msg}</span>\n`;
+        box.scrollTop = box.scrollHeight;
     }
 
-    function handleFileSelect(input) {
-        if (input.files && input.files[0]) {
-            selectedFile = input.files[0];
-            document.getElementById('fileName').innerText = "已选择: " + selectedFile.name;
-            document.getElementById('processBtn').disabled = false;
-            log("文件已就绪，请点击开始处理。");
+    // 文件选择处理
+    function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        document.getElementById('fileInfo').innerText = `已选择: ${file.name}`;
+        log(`正在读取文件: ${file.name}...`);
+
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                workbookA = XLSX.read(data, {type: 'array'});
+                log("A表格读取成功。", "info");
+                
+                // 尝试自动加载同目录下的 C表格.xlsx
+                await loadTemplateC();
+                
+                document.getElementById('startBtn').disabled = false;
+            } catch (err) {
+                log("文件解析失败: " + err.message, "error");
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    // 加载模板 C表格
+    async function loadTemplateC() {
+        try {
+            // 注意：这里假设 C表格.xlsx 和 index.html 在同一级目录
+            const response = await fetch('./C表格.xlsx');
+            if (!response.ok) throw new Error("无法找到 C表格.xlsx");
+            
+            const buffer = await response.arrayBuffer();
+            workbookC = XLSX.read(buffer, {type: 'array'});
+            log("C表格模板加载成功。", "info");
+        } catch (err) {
+            log("加载模板失败: " + err.message, "error");
+            log("提示：请确保 index.html 同级目录下有 C表格.xlsx", "info");
         }
     }
 
+    // --- 核心处理逻辑 ---
     async function startProcessing() {
-        if (!selectedFile) return;
-        
-        const btn = document.getElementById('processBtn');
-        const downloadLink = document.getElementById('downloadLink');
+        const btn = document.getElementById('startBtn');
         btn.disabled = true;
-        downloadLink.style.display = 'none';
-        document.getElementById('logBox').innerHTML = ''; // 清空日志
+        btn.innerText = "处理中...";
+        document.getElementById('logBox').innerHTML = ""; // 清空日志
+        
+        const shopUrl = document.getElementById('shopUrl').value.trim();
 
         try {
-            const shopUrl = document.getElementById('shopUrl').value.trim();
-            if (!shopUrl) {
-                alert("请输入店铺网址！");
-                return;
-            }
-
-            // ==========================================
-            // 第1步：加载资源
-            // ==========================================
-            log("--- 第1步：初始化环境 ---", 'step');
+            // ================= 第1步：初始化 =================
+            log("--- 第1步：初始化环境 ---", "step");
+            const sheetNameA = workbookA.SheetNames[0];
+            const sheetA = workbookA.Sheets[sheetNameA];
+            // header:1 表示生成二维数组，不自动转对象，方便按列号操作
+            const rawData = XLSX.utils.sheet_to_json(sheetA, {header: 1}); 
             
-            // 读取用户上传的 A表格
-            const aData = await readFile(selectedFile);
-            const aWorkbook = XLSX.read(aData, {type: 'array'});
-            const aSheetName = aWorkbook.SheetNames[0];
-            const aSheet = aWorkbook.Sheets[aSheetName];
-            // 转换为JSON对象数组，header:1 表示生成二维数组，方便按索引取值
-            const aJson = XLSX.utils.sheet_to_json(aSheet, {header: 1}); 
+            if (rawData.length < 2) throw new Error("A表格数据为空或格式错误");
+            log(`A表格加载完成，共 ${rawData.length - 1} 行数据。`);
+
+            // ================= 第2步：加载模板 =================
+            log("--- 第2步：准备C表格模板 ---", "step");
+            if (!workbookC) throw new Error("模板未加载");
+            const sheetNameC = workbookC.SheetNames[0];
+            // 克隆一份模板，避免修改原内存对象
+            resultWorkbook = XLSX.utils.book_new();
+            // 深拷贝Sheet数据比较麻烦，这里我们直接操作JSON
+            // 先获取C表头，作为基准
+            const sheetC = workbookC.Sheets[sheetNameC];
+            const cHeader = XLSX.utils.sheet_to_json(sheetC, {header: 1})[0]; // 获取第一行表头
+            log(`C模板表头识别: ${cHeader.join(", ")}`);
+
+            // ================= 第3步：执行多重筛选 (关键修正) =================
+            log("--- 第3步：执行多重筛选逻辑 ---", "step");
             
-            log(`成功读取 A表格，共 ${aJson.length} 行数据。`);
+            let validDataCount = 0;
+            let skippedCount = 0;
+            const filteredRows = [];
 
-            // ==========================================
-            // 第2步：加载 C表格 (模板)
-            // ==========================================
-            log("--- 第2步：加载 C表格模板 ---", 'step');
-            try {
-                // 尝试从GitHub加载 C表格.xlsx
-                const response = await fetch('./C表格.xlsx');
-                if (!response.ok) throw new Error("无法找到C表格.xlsx");
-                const cBuffer = await response.arrayBuffer();
-                const cWorkbook = XLSX.read(cBuffer, {type: 'array'});
-                const cSheetName = cWorkbook.SheetNames[0];
-                const cSheet = cWorkbook.Sheets[cSheetName];
-                
-                // 获取C表的表头（第一行），用于后续匹配列
-                const cHeader = XLSX.utils.sheet_to_json(cSheet, {header: 1})[0];
-                log(`成功加载 C表格模板，包含列: [${cHeader.join(', ')}]`);
+            // 从第2行开始遍历（跳过表头）
+            for (let i = 1; i < rawData.length; i++) {
+                const row = rawData[i];
+                if (!row || row.length === 0) continue;
 
-                // ==========================================
-                // 第3步：遍历 A表格 进行筛选
-                // ==========================================
-                log("--- 第3步：开始筛选数据 (AW列 = Mercado Envios Full) ---", 'step');
-                
-                let validRows = [];
-                let skipCount = 0;
+                let isValid = true;
+                let skipReason = "";
 
-                // 从第2行开始遍历（跳过表头）
-                for (let i = 1; i < aJson.length; i++) {
-                    const row = aJson[i];
-                    if (!row || row.length === 0) continue;
-
-                    // 获取 AW列 (索引48) 的值
-                    // 注意：如果行数据长度不够48，说明这行没数据，直接跳过
-                    const cellValue = row[CONFIG.col_aw_index]; 
-
-                    // 核心判断逻辑
-                    if (cellValue && String(cellValue).trim() === CONFIG.filter_value) {
-                        validRows.push(row);
-                    } else {
-                        skipCount++;
-                    }
+                // --- 筛选条件 1 (AW列) ---
+                // Excel中 AW 是第 49 列，数组索引是 48
+                const colAW_Value = row[48]; 
+                if (String(colAW_Value).trim() !== "Mercado Envios Full") {
+                    isValid = false;
+                    skipReason = "AW列不是Full";
                 }
 
-                log(`筛选完成：保留 ${validRows.length} 行，剔除 ${skipCount} 行。`);
+                // --- 筛选条件 2 (示例：假设第2列B不能为空) ---
+                // *注意：如果你有具体的其他筛选列，请在这里添加*
+                // 比如：if (!row[1]) { isValid = false; skipReason = "B列为空"; }
 
-                if (validRows.length === 0) {
-                    throw new Error("没有找到符合条件的数据，请检查A表格内容或AW列位置。");
+                // --- 筛选条件 3 (示例：假设第3列C必须包含数字) ---
+                // if (...) ...
+
+                if (isValid) {
+                    filteredRows.push(row);
+                    validDataCount++;
+                } else {
+                    skippedCount++;
+                    // 仅打印前几个错误以便调试，防止日志爆炸
+                    if (skippedCount <= 3) {
+                        log(`跳过第 ${i+1} 行: ${skipReason} (AW值: ${colAW_Value})`, "info");
+                    }
                 }
-
-                // ==========================================
-                // 第4步：数据映射与填充 (核心修改部分)
-                // ==========================================
-                log("--- 第4步：将数据填入 C表格模板 ---", 'step');
-                
-                // 创建一个新的工作表数据数组
-                // 第一行是 C表的原始表头
-                let finalData = [cHeader]; 
-
-                // 找出 A表 和 C表 的列对应关系
-                // 假设 A表 的表头在第一行 aJson[0]
-                const aHeader = aJson[0]; 
-                
-                // 构建一个映射：C表列名 -> A表列索引
-                // 注意：这里为了通用性，假设两表的列名是完全一致的。
-                // 如果列名不同，需要在这里手动指定映射，例如： map['C表列名'] = 'A表列名'
-                let columnMap = {}; 
-                cHeader.forEach((cColName, index) => {
-                    const aIndex = aHeader.indexOf(cColName);
-                    if (aIndex !== -1) {
-                        columnMap[index] = aIndex; // C表的第index列 对应 A表的第aIndex列
-                    }
-                });
-
-                // 查找“店铺网址”在C表中的列索引
-                const shopUrlColIndex = cHeader.indexOf(CONFIG.shop_url_col_name);
-
-                // 开始逐行填充
-                validRows.forEach(aRow => {
-                    // 创建一个空数组，长度与C表表头一致
-                    let newRow = new Array(cHeader.length).fill(""); 
-
-                    // 遍历C表的每一列
-                    for (let cIdx = 0; cIdx < cHeader.length; cIdx++) {
-                        // 1. 如果是店铺网址列，填入用户输入的值
-                        if (cIdx === shopUrlColIndex) {
-                            newRow[cIdx] = shopUrl;
-                            continue;
-                        }
-
-                        // 2. 否则，查看是否有映射关系，有则从A表取值
-                        if (columnMap[cIdx] !== undefined) {
-                            newRow[cIdx] = aRow[columnMap[cIdx]];
-                        }
-                    }
-                    finalData.push(newRow);
-                });
-
-                log(`数据填充完毕，准备生成文件...`);
-
-                // ==========================================
-                // 第5步：生成并导出文件
-                // ==========================================
-                log("--- 第5步：生成最终 Excel 文件 ---", 'step');
-                
-                const newWs = XLSX.utils.aoa_to_sheet(finalData);
-                const newWb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(newWb, newWs, "Sheet1");
-
-                // 触发下载
-                const wbout = XLSX.write(newWb, {bookType:'xlsx', type:'array'});
-                const blob = new Blob([wbout], {type:"application/octet-stream"});
-                const url = URL.createObjectURL(blob);
-                
-                downloadLink.href = url;
-                downloadLink.download = "处理结果_C表格.xlsx";
-                downloadLink.style.display = 'block';
-                downloadLink.innerText = "下载处理后的C表格";
-                
-                log("处理全部完成！请点击下方绿色按钮下载。", 'step');
-
-            } catch (err) {
-                console.error(err);
-                log(`错误：加载C表格失败 - ${err.message}`, 'error');
-                log("提示：请确保 index.html 同级目录下有 'C表格.xlsx'", 'error');
+            }
+            
+            log(`筛选完成：保留 ${validDataCount} 行，剔除 ${skippedCount} 行。`);
+            if (validDataCount === 0) {
+                throw new Error("没有符合所有条件的数据！请检查A表格内容和筛选逻辑。");
             }
 
-        } catch (e) {
-            log(`系统错误：${e.message}`, 'error');
-        } finally {
+            // ================= 第4步：数据映射与填表 =================
+            log("--- 第4步：将数据填入C表格模板 ---", "step");
+            
+            // 我们需要把 filteredRows (A表的数据) 转换并塞进 C表的结构里
+            // 这里假设 A表 和 C表 的列顺序是一一对应的，或者你需要手动指定映射
+            
+            // 构建新的Sheet数据数组
+            let newSheetData = [cHeader]; // 先把C的表头放进去
+
+            filteredRows.forEach((row, index) => {
+                // 创建一行新数据，长度与C表头一致，初始化为空
+                let newRow = new Array(cHeader.length).fill(""); 
+
+                // *** 核心映射逻辑 ***
+                // 假设 A表的列直接对应 C表的列 (如果是这样，直接复制即可)
+                // 如果列顺序不同，需要在这里写: newRow[C表索引] = row[A表索引];
+                
+                // 简单处理：将A表的前N列直接复制过来（假设结构相同）
+                // 为了安全，我们取两者长度的最小值
+                const len = Math.min(row.length, cHeader.length);
+                for(let k=0; k<len; k++) {
+                    newRow[k] = row[k];
+                }
+
+                // ================= 第10步：填入店铺网址 =================
+                log(`--- 第10步：正在写入第 ${index+1} 行店铺网址 ---`, "step");
+                // 假设“店铺网址”在 C表格的第 1 列 (索引0)，如果不是请修改索引
+                // 或者是查找表头名为 "店铺网址" 的列
+                const urlColIndex = cHeader.indexOf("店铺网址"); // 动态查找列
+                if (urlColIndex > -1) {
+                    newRow[urlColIndex] = shopUrl;
+                } else {
+                    // 如果没找到表头，默认填在第1列或者最后一列，视你的需求而定
+                    // 这里演示强制填入第1列 (索引0)
+                    newRow[0] = shopUrl; 
+                    if(index === 0) log("警告：未在C表头找到'店铺网址'，已强制填入第1列", "info");
+                }
+
+                newSheetData.push(newRow);
+            });
+
+            // ================= 第5步：生成最终文件 =================
+            log("--- 第5步：生成最终文件 ---", "step");
+            
+            // 将二维数组转回 Sheet
+            const newSheet = XLSX.utils.aoa_to_sheet(newSheetData);
+            
+            // 将Sheet添加到工作簿，替换原来的Sheet名
+            XLSX.utils.book_append_sheet(resultWorkbook, newSheet, sheetNameC);
+
+            log("处理全部完成！", "info");
+            document.getElementById('downloadBtn').style.display = 'block';
+            btn.innerText = "处理完成";
+
+        } catch (err) {
+            log("发生严重错误: " + err.message, "error");
+            console.error(err);
             btn.disabled = false;
+            btn.innerText = "重试";
         }
     }
 
-    // 辅助函数：读取文件为ArrayBuffer
-    function readFile(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = (e) => resolve(e.target.result);
-            reader.onerror = reject;
-            reader.readAsArrayBuffer(file);
-        });
+    // 下载文件
+    function downloadResult() {
+        if (!resultWorkbook) return;
+        XLSX.writeFile(resultWorkbook, "C表格_已处理.xlsx");
     }
 </script>
 
