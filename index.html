@@ -4,222 +4,172 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>A表转C表自动化处理工具</title>
-    <!-- 引入 SheetJS 库 -->
+    <!-- 引入 SheetJS (xlsx) 库 -->
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <style>
-        :root {
-            --primary-color: #007bff;
-            --bg-color: #f8f9fa;
-            --log-bg: #1e1e1e;
-            --log-text: #00ff00;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: var(--bg-color);
-            color: #333;
-        }
-
-        h1 { text-align: center; color: #2c3e50; }
-
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; }
-
-        input[type="text"], input[type="file"] {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-
-        button {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background 0.3s;
-        }
-
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 500px; max-width: 90%; }
+        h2 { text-align: center; color: #333; margin-bottom: 20px; }
+        
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        input[type="text"], input[type="file"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        
+        button { width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; transition: background 0.3s; margin-top: 10px; }
         button:hover { background-color: #0056b3; }
         button:disabled { background-color: #ccc; cursor: not-allowed; }
 
         /* 日志区域样式 */
-        .log-container {
-            margin-top: 30px;
-            background-color: var(--log-bg);
-            color: var(--log-text);
-            padding: 15px;
-            border-radius: 4px;
-            height: 200px;
-            overflow-y: auto;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 14px;
-            border: 1px solid #444;
-        }
-
-        .log-entry { margin-bottom: 5px; border-bottom: 1px dashed #333; padding-bottom: 2px;}
-        .log-time { color: #888; margin-right: 10px; }
-        .error { color: #ff4444; }
+        .log-container { margin-top: 20px; background: #2d2d2d; color: #00ff00; padding: 10px; border-radius: 6px; height: 150px; overflow-y: auto; font-family: monospace; font-size: 12px; border: 1px solid #444; }
+        .log-entry { margin-bottom: 4px; border-bottom: 1px solid #333; padding-bottom: 2px; }
+        .log-error { color: #ff4d4d; }
+        .log-info { color: #00ffff; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Excel 自动化处理工具</h1>
+    <h2>📊 表格自动化处理工具</h2>
 
-    <!-- 步骤1：输入店铺网址 (对应第10步需求) -->
+    <!-- 第10步所需的输入框 -->
     <div class="form-group">
-        <label for="shopUrl">请输入店铺网址 (用于填入C表):</label>
-        <input type="text" id="shopUrl" placeholder="例如: https://shop.example.com" value="">
+        <label for="shopUrl">店铺网址 (用于填入C表):</label>
+        <input type="text" id="shopUrl" placeholder="请输入店铺链接..." value="https://shopee.co.id/...">
     </div>
 
-    <!-- 步骤2：上传A表格 -->
+    <!-- 上传 A 表格 -->
     <div class="form-group">
-        <label for="fileInput">上传 A 表格文件 (.xlsx / .xls):</label>
+        <label for="fileInput">上传 A 表格 (.xlsx / .xls):</label>
         <input type="file" id="fileInput" accept=".xlsx, .xls">
     </div>
 
-    <!-- 执行按钮 -->
-    <button id="processBtn" onclick="startProcessing()">开始处理并生成 C 表格</button>
+    <button id="processBtn" onclick="startProcess()">开始处理并生成 C 表格</button>
 
-    <!-- 运行日志 -->
+    <!-- 运行日志显示区 -->
     <div class="log-container" id="logBox">
-        <div class="log-entry"><span class="log-time">[系统]</span> 等待操作...</div>
+        <div class="log-entry">等待操作...</div>
     </div>
 </div>
 
 <script>
-    // 日志工具函数
-    function addLog(message, isError = false) {
+    // 日志功能函数
+    function addLog(msg, type = 'normal') {
         const logBox = document.getElementById('logBox');
-        const now = new Date().toLocaleTimeString();
-        const entry = document.createElement('div');
-        entry.className = 'log-entry' + (isError ? ' error' : '');
-        entry.innerHTML = `<span class="log-time">[${now}]</span> ${message}`;
-        logBox.appendChild(entry);
+        const time = new Date().toLocaleTimeString();
+        const div = document.createElement('div');
+        div.className = 'log-entry';
+        
+        let colorClass = '';
+        if (type === 'error') colorClass = 'log-error';
+        if (type === 'info') colorClass = 'log-info';
+        
+        div.innerHTML = `<span style="color:#888">[${time}]</span> <span class="${colorClass}">${msg}</span>`;
+        logBox.appendChild(div);
         logBox.scrollTop = logBox.scrollHeight; // 自动滚动到底部
-        console.log(message);
+        console.log(msg);
     }
 
-    async function startProcessing() {
+    async function startProcess() {
         const fileInput = document.getElementById('fileInput');
         const shopUrl = document.getElementById('shopUrl').value.trim();
         const btn = document.getElementById('processBtn');
 
         // 1. 基础校验
         if (!fileInput.files.length) {
-            addLog("错误：请先选择 A 表格文件！", true);
+            addLog("错误：请先选择 A 表格文件！", "error");
             return;
         }
         if (!shopUrl) {
-            addLog("警告：店铺网址为空，C表对应列将为空。", true);
+            addLog("警告：店铺网址为空，请确认是否继续。", "error");
+            // 这里可以根据需求决定是否强制阻断，暂时只警告
         }
 
         const file = fileInput.files[0];
-        addLog(`开始读取文件: ${file.name}`);
         btn.disabled = true;
         btn.innerText = "处理中...";
+        addLog(`开始读取文件: ${file.name}`, "info");
 
         try {
-            // 2. 读取文件 (模拟《文件执行步骤》的开始)
+            // 2. 读取文件 (FileReader)
             const data = await readFileAsync(file);
-            addLog("文件读取成功，正在解析数据...");
+            addLog("文件读取成功，正在解析...", "info");
 
-            // 3. 解析 Workbook
-            const workbook = XLSX.read(data, {type: 'array'});
+            // 3. 解析 Excel (SheetJS)
+            const workbook = XLSX.read(data, { type: 'array' });
+            
+            // 获取第一个工作表
             const firstSheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[firstSheetName];
-
+            
             // 将 Sheet 转换为 JSON 对象数组 (header:1 表示按行数组读取，方便后续处理)
-            const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
-
-            if (jsonData.length === 0) {
-                throw new Error("表格内容为空");
-            }
-
-            addLog(`解析完成，共获取 ${jsonData.length} 行数据。`);
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            
+            addLog(`解析成功，共读取到 ${jsonData.length} 行数据`, "info");
 
             // ==========================================
-            // 核心处理逻辑区域 (在此处根据您的Word文档修改)
+            // 核心逻辑区域：模拟《文件执行步骤》
             // ==========================================
-            addLog("正在执行转换逻辑...");
-
-            // 假设我们要生成一个新的 C 表格数据
-            // C表通常包含表头，这里我们初始化 C 表的数据结构
+            
+            // 假设我们要创建一个新的 C 表格数据结构
+            // C表的第一行通常是表头
             let cTableData = [];
-
-            // 添加 C 表表头 (请根据您的实际需求修改这些列名)
-            cTableData.push(["序号", "原数据内容", "店铺网址", "处理状态"]);
+            cTableData.push(["商品名称", "价格", "库存", "店铺网址"]); // 示例表头
 
             // 遍历 A 表数据 (跳过第一行表头，从 i=1 开始)
             for (let i = 1; i < jsonData.length; i++) {
                 const row = jsonData[i];
-                if (!row || row.length === 0) continue; // 跳过空行
+                if (!row || row.length === 0) continue;
 
-                // --- 模拟《文件执行步骤》中的具体操作 ---
-
-                // 示例逻辑：取 A 表的第一列数据
-                const originalData = row[0];
-
-                // 第10步逻辑：填入店铺网址
-                const urlToFill = shopUrl;
+                // --- 在这里编写具体的转换逻辑 ---
+                // 示例逻辑：
+                // 假设 A 表第1列是品名，第2列是价格
+                
+                let itemA_Name = row[0] || "未知商品"; 
+                let itemA_Price = row[1] || 0;
+                
+                // 模拟第10步：填入用户输入的网址
+                let finalShopUrl = shopUrl; 
 
                 // 构建 C 表的一行
-                // 您可以在这里添加复杂的判断逻辑
-                const newRow = [
-                    i,              // 序号
-                    originalData,   // 来自A表的数据
-                    urlToFill,      // 用户输入的网址
-                    "已处理"        // 状态
+                let newRow = [
+                    itemA_Name,      // C表列1
+                    itemA_Price,     // C表列2
+                    100,             // C表列3 (示例固定值)
+                    finalShopUrl     // 第10步要求的自动填入
                 ];
-
+                
                 cTableData.push(newRow);
             }
 
-            addLog("数据转换完成，正在生成 C 表格文件...");
+            addLog("数据处理完成，正在生成 C 表格...", "info");
 
             // 4. 生成新的 Workbook
             const newWs = XLSX.utils.aoa_to_sheet(cTableData); // Array of Arrays to Sheet
             const newWb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(newWb, newWs, "C表结果");
+            XLSX.utils.book_append_sheet(newWb, newWs, "Sheet1");
 
             // 5. 导出下载
-            const fileName = `C表_生成结果_${new Date().getTime()}.xlsx`;
+            const fileName = `C_表格_${new Date().getTime()}.xlsx`;
             XLSX.writeFile(newWb, fileName);
-
-            addLog(`成功！文件 ${fileName} 已开始下载。`, false);
+            
+            addLog(`✅ 成功！文件 ${fileName} 已开始下载`, "info");
 
         } catch (err) {
             console.error(err);
-            addLog(`处理出错: ${err.message}`, true);
+            addLog(`❌ 发生严重错误: ${err.message}`, "error");
         } finally {
             btn.disabled = false;
             btn.innerText = "开始处理并生成 C 表格";
         }
     }
 
-    // 辅助函数：异步读取文件
+    // 辅助函数：将 FileReader 封装为 Promise
     function readFileAsync(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = (e) => resolve(e.target.result);
             reader.onerror = (e) => reject(e);
-            reader.readAsArrayBuffer(file);
+            reader.readAsArrayBuffer(file); // 关键：必须读为 ArrayBuffer
         });
     }
 </script>
