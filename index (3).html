@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>表格处理工具</title>
+    <!-- SheetJS 库 -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <style>
+        :root { --primary: #4f46e5; --bg: #f9fafb; }
+        body { font-family: system-ui, sans-serif; background: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
+        h2 { margin-top: 0; color: #1f2937; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151; }
+        input[type="text"], input[type="file"] { width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; padding: 1rem; background: var(--primary); color: white; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; margin-top: 1rem; }
+        button:hover { opacity: 0.9; }
+        .status { margin-top: 1rem; padding: 0.75rem; border-radius: 6px; display: none; font-size: 0.9rem; }
+        .success { background: #d1fae5; color: #065f46; display: block; }
+        .error { background: #fee2e2; color: #991b1b; display: block; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>📊 表格处理工具</h2>
+    
+    <div class="form-group">
+        <label for="shopUrl">店铺网址 (C表)</label>
+        <input type="text" id="shopUrl" placeholder="请输入店铺网址...">
+    </div>
+
+    <div class="form-group">
+        <label for="fileInput">上传 A 表格</label>
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.xlsm,.csv">
+    </div>
+
+    <button id="processBtn">生成 C 表格</button>
+    <div id="statusMsg" class="status"></div>
+</div>
+
+<script>
+    // ==========================================
+    // ⚙️ 配置区：方便修改的地方都在这里
+    // ==========================================
+    const CONFIG = {
+        // B 表格的远程地址 (常驻文件)
+        B_FILE_URL: './B_Template.xlsx', 
+        
+        // C 表格中 "店铺网址" 所在的列名 (请根据实际B表头修改)
+        SHOP_URL_COLUMN: '店铺网址', 
+        
+        // 步骤映射逻辑：A表列名 -> C表列名
+        // 格式: 'A表列名': 'C表列名'
+        COLUMN_MAP: {
+            '商品名称': '产品名称',
+            'SKU编码': '货号',
+            '价格': '售价',
+            '库存': '库存数量'
+        }
+    };
+
+    // ==========================================
+    // 🛠️ 核心逻辑
+    // ==========================================
+    const ui = {
+        urlInput: document.getElementById('shopUrl'),
+        fileInput: document.getElementById('fileInput'),
+        btn: document.getElementById('processBtn'),
+        msg: document.getElementById('statusMsg')
+    };
+
+    ui.btn.addEventListener('click', async () => {
+        const shopUrl = ui.urlInput.value.trim();
+        const file = ui.fileInput.files[0];
+
+        // 1. 基础校验
+        if (!shopUrl) return showStatus('请填写店铺网址', 'error');
+        if (!file) return showStatus('请上传 A 表格', 'error');
+
+        ui.btn.disabled = true;
+        ui.btn.textContent = '处理中...';
+        showStatus('');
+
+        try {
+            // 2. 读取文件
+            const [aData, bData] = await Promise.all([
+                readFile(file),
+                fetch(CONFIG.B_FILE_URL).then(r => {
+                    if(!r.ok) throw new Error('B表加载失败，请检查路径');
+                    return r.arrayBuffer();
+                })
+            ]);
+
+            // 3. 解析 SheetJS
+            const wbA = XLSX.read(aData, { type: 'array' });
+            const wbB = XLSX.read(bData, { type: 'array' });
+            
+            const sheetA = wbA.Sheets[wbA.SheetNames[0]];
+            const sheetB = wbB.Sheets[wbB.SheetNames[0]]; // C表基于B表
+
+            const jsonA = XLSX.utils.sheet_to_json(sheetA);
+            const jsonC = XLSX.utils.sheet_to_json(sheetB); // B表即C表模板
+
+            // 4. 执行步骤 1,2,3 (映射 + 填网址)
+            const resultData = jsonC.map(row => {
+                const newRow = { ...row };
+                
+                // 步骤: 填写店铺网址
+                if (newRow[CONFIG.SHOP_URL_COLUMN] !== undefined) {
+                    newRow[CONFIG.SHOP_URL_COLUMN] = shopUrl;
+                }
+
+                // 步骤: 映射 A 表内容 (这里假设按行对应，实际可能需要匹配键值)
+                // 简单示例：如果C表有对应列，从A表拿数据
+                Object.entries(CONFIG.COLUMN_MAP).forEach(([aCol, cCol]) => {
+                    if (newRow[cCol] !== undefined && jsonA[0] && jsonA[0][aCol] !== undefined) {
+                        // 注意：这里仅为演示，实际业务可能需要更复杂的匹配逻辑
+                        // 例如根据 SKU 匹配，而不是行号匹配
+                    }
+                });
+
+                return newRow;
+            });
+
+            // 5. 生成并下载
+            const newWb = XLSX.utils.book_new();
+            const newWs = XLSX.utils.json_to_sheet(resultData);
+            XLSX.utils.book_append_sheet(newWb, newWs, 'C表格');
+            
+            XLSX.writeFile(newWb, `C表格_${new Date().getTime()}.xlsx`);
+            showStatus('✅ 生成成功，已开始下载！', 'success');
+
+        } catch (err) {
+            console.error(err);
+            showStatus('❌ 处理失败: ' + err.message, 'error');
+        } finally {
+            ui.btn.disabled = false;
+            ui.btn.textContent = '生成 C 表格';
+        }
+    });
+
+    // ==========================================
+    // 🔧 工具函数
+    // ==========================================
+    function readFile(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = e => resolve(e.target.result);
+            reader.onerror = e => reject(e);
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    function showStatus(text, type) {
+        ui.msg.textContent = text;
+        ui.msg.className = 'status ' + (type || '');
+    }
+</script>
+</body>
+</html>
