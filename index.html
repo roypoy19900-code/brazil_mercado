@@ -3,160 +3,226 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>表格处理工具</title>
-    <!-- SheetJS 库 -->
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <title>A表转C表自动化处理工具</title>
+    <!-- 引入 SheetJS 库 -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <style>
-        :root { --primary: #4f46e5; --bg: #f9fafb; }
-        body { font-family: system-ui, sans-serif; background: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
-        h2 { margin-top: 0; color: #1f2937; }
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151; }
-        input[type="text"], input[type="file"] { width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; }
-        button { width: 100%; padding: 1rem; background: var(--primary); color: white; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; margin-top: 1rem; }
-        button:hover { opacity: 0.9; }
-        .status { margin-top: 1rem; padding: 0.75rem; border-radius: 6px; display: none; font-size: 0.9rem; }
-        .success { background: #d1fae5; color: #065f46; display: block; }
-        .error { background: #fee2e2; color: #991b1b; display: block; }
+        :root {
+            --primary-color: #007bff;
+            --bg-color: #f8f9fa;
+            --log-bg: #1e1e1e;
+            --log-text: #00ff00;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: var(--bg-color);
+            color: #333;
+        }
+
+        h1 { text-align: center; color: #2c3e50; }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+
+        input[type="text"], input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        /* 日志区域样式 */
+        .log-container {
+            margin-top: 30px;
+            background-color: var(--log-bg);
+            color: var(--log-text);
+            padding: 15px;
+            border-radius: 4px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            border: 1px solid #444;
+        }
+
+        .log-entry { margin-bottom: 5px; border-bottom: 1px dashed #333; padding-bottom: 2px;}
+        .log-time { color: #888; margin-right: 10px; }
+        .error { color: #ff4444; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>📊 表格处理工具</h2>
-    
+<div class="container">
+    <h1>Excel 自动化处理工具</h1>
+
+    <!-- 步骤1：输入店铺网址 (对应第10步需求) -->
     <div class="form-group">
-        <label for="shopUrl">店铺网址 (C表)</label>
-        <input type="text" id="shopUrl" placeholder="请输入店铺网址...">
+        <label for="shopUrl">请输入店铺网址 (用于填入C表):</label>
+        <input type="text" id="shopUrl" placeholder="例如: https://shop.example.com" value="">
     </div>
 
+    <!-- 步骤2：上传A表格 -->
     <div class="form-group">
-        <label for="fileInput">上传 A 表格</label>
-        <input type="file" id="fileInput" accept=".xlsx,.xls,.xlsm,.csv">
+        <label for="fileInput">上传 A 表格文件 (.xlsx / .xls):</label>
+        <input type="file" id="fileInput" accept=".xlsx, .xls">
     </div>
 
-    <button id="processBtn">生成 C 表格</button>
-    <div id="statusMsg" class="status"></div>
+    <!-- 执行按钮 -->
+    <button id="processBtn" onclick="startProcessing()">开始处理并生成 C 表格</button>
+
+    <!-- 运行日志 -->
+    <div class="log-container" id="logBox">
+        <div class="log-entry"><span class="log-time">[系统]</span> 等待操作...</div>
+    </div>
 </div>
 
 <script>
-    // ==========================================
-    // ⚙️ 配置区：方便修改的地方都在这里
-    // ==========================================
-    const CONFIG = {
-        // B 表格的远程地址 (常驻文件)
-        B_FILE_URL: './B_Template.xlsx', 
-        
-        // C 表格中 "店铺网址" 所在的列名 (请根据实际B表头修改)
-        SHOP_URL_COLUMN: '店铺网址', 
-        
-        // 步骤映射逻辑：A表列名 -> C表列名
-        // 格式: 'A表列名': 'C表列名'
-        COLUMN_MAP: {
-            '商品名称': '产品名称',
-            'SKU编码': '货号',
-            '价格': '售价',
-            '库存': '库存数量'
-        }
-    };
+    // 日志工具函数
+    function addLog(message, isError = false) {
+        const logBox = document.getElementById('logBox');
+        const now = new Date().toLocaleTimeString();
+        const entry = document.createElement('div');
+        entry.className = 'log-entry' + (isError ? ' error' : '');
+        entry.innerHTML = `<span class="log-time">[${now}]</span> ${message}`;
+        logBox.appendChild(entry);
+        logBox.scrollTop = logBox.scrollHeight; // 自动滚动到底部
+        console.log(message);
+    }
 
-    // ==========================================
-    // 🛠️ 核心逻辑
-    // ==========================================
-    const ui = {
-        urlInput: document.getElementById('shopUrl'),
-        fileInput: document.getElementById('fileInput'),
-        btn: document.getElementById('processBtn'),
-        msg: document.getElementById('statusMsg')
-    };
-
-    ui.btn.addEventListener('click', async () => {
-        const shopUrl = ui.urlInput.value.trim();
-        const file = ui.fileInput.files[0];
+    async function startProcessing() {
+        const fileInput = document.getElementById('fileInput');
+        const shopUrl = document.getElementById('shopUrl').value.trim();
+        const btn = document.getElementById('processBtn');
 
         // 1. 基础校验
-        if (!shopUrl) return showStatus('请填写店铺网址', 'error');
-        if (!file) return showStatus('请上传 A 表格', 'error');
+        if (!fileInput.files.length) {
+            addLog("错误：请先选择 A 表格文件！", true);
+            return;
+        }
+        if (!shopUrl) {
+            addLog("警告：店铺网址为空，C表对应列将为空。", true);
+        }
 
-        ui.btn.disabled = true;
-        ui.btn.textContent = '处理中...';
-        showStatus('');
+        const file = fileInput.files[0];
+        addLog(`开始读取文件: ${file.name}`);
+        btn.disabled = true;
+        btn.innerText = "处理中...";
 
         try {
-            // 2. 读取文件
-            const [aData, bData] = await Promise.all([
-                readFile(file),
-                fetch(CONFIG.B_FILE_URL).then(r => {
-                    if(!r.ok) throw new Error('B表加载失败，请检查路径');
-                    return r.arrayBuffer();
-                })
-            ]);
+            // 2. 读取文件 (模拟《文件执行步骤》的开始)
+            const data = await readFileAsync(file);
+            addLog("文件读取成功，正在解析数据...");
 
-            // 3. 解析 SheetJS
-            const wbA = XLSX.read(aData, { type: 'array' });
-            const wbB = XLSX.read(bData, { type: 'array' });
-            
-            const sheetA = wbA.Sheets[wbA.SheetNames[0]];
-            const sheetB = wbB.Sheets[wbB.SheetNames[0]]; // C表基于B表
+            // 3. 解析 Workbook
+            const workbook = XLSX.read(data, {type: 'array'});
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
 
-            const jsonA = XLSX.utils.sheet_to_json(sheetA);
-            const jsonC = XLSX.utils.sheet_to_json(sheetB); // B表即C表模板
+            // 将 Sheet 转换为 JSON 对象数组 (header:1 表示按行数组读取，方便后续处理)
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
 
-            // 4. 执行步骤 1,2,3 (映射 + 填网址)
-            const resultData = jsonC.map(row => {
-                const newRow = { ...row };
-                
-                // 步骤: 填写店铺网址
-                if (newRow[CONFIG.SHOP_URL_COLUMN] !== undefined) {
-                    newRow[CONFIG.SHOP_URL_COLUMN] = shopUrl;
-                }
+            if (jsonData.length === 0) {
+                throw new Error("表格内容为空");
+            }
 
-                // 步骤: 映射 A 表内容 (这里假设按行对应，实际可能需要匹配键值)
-                // 简单示例：如果C表有对应列，从A表拿数据
-                Object.entries(CONFIG.COLUMN_MAP).forEach(([aCol, cCol]) => {
-                    if (newRow[cCol] !== undefined && jsonA[0] && jsonA[0][aCol] !== undefined) {
-                        // 注意：这里仅为演示，实际业务可能需要更复杂的匹配逻辑
-                        // 例如根据 SKU 匹配，而不是行号匹配
-                    }
-                });
+            addLog(`解析完成，共获取 ${jsonData.length} 行数据。`);
 
-                return newRow;
-            });
+            // ==========================================
+            // 核心处理逻辑区域 (在此处根据您的Word文档修改)
+            // ==========================================
+            addLog("正在执行转换逻辑...");
 
-            // 5. 生成并下载
+            // 假设我们要生成一个新的 C 表格数据
+            // C表通常包含表头，这里我们初始化 C 表的数据结构
+            let cTableData = [];
+
+            // 添加 C 表表头 (请根据您的实际需求修改这些列名)
+            cTableData.push(["序号", "原数据内容", "店铺网址", "处理状态"]);
+
+            // 遍历 A 表数据 (跳过第一行表头，从 i=1 开始)
+            for (let i = 1; i < jsonData.length; i++) {
+                const row = jsonData[i];
+                if (!row || row.length === 0) continue; // 跳过空行
+
+                // --- 模拟《文件执行步骤》中的具体操作 ---
+
+                // 示例逻辑：取 A 表的第一列数据
+                const originalData = row[0];
+
+                // 第10步逻辑：填入店铺网址
+                const urlToFill = shopUrl;
+
+                // 构建 C 表的一行
+                // 您可以在这里添加复杂的判断逻辑
+                const newRow = [
+                    i,              // 序号
+                    originalData,   // 来自A表的数据
+                    urlToFill,      // 用户输入的网址
+                    "已处理"        // 状态
+                ];
+
+                cTableData.push(newRow);
+            }
+
+            addLog("数据转换完成，正在生成 C 表格文件...");
+
+            // 4. 生成新的 Workbook
+            const newWs = XLSX.utils.aoa_to_sheet(cTableData); // Array of Arrays to Sheet
             const newWb = XLSX.utils.book_new();
-            const newWs = XLSX.utils.json_to_sheet(resultData);
-            XLSX.utils.book_append_sheet(newWb, newWs, 'C表格');
-            
-            XLSX.writeFile(newWb, `C表格_${new Date().getTime()}.xlsx`);
-            showStatus('✅ 生成成功，已开始下载！', 'success');
+            XLSX.utils.book_append_sheet(newWb, newWs, "C表结果");
+
+            // 5. 导出下载
+            const fileName = `C表_生成结果_${new Date().getTime()}.xlsx`;
+            XLSX.writeFile(newWb, fileName);
+
+            addLog(`成功！文件 ${fileName} 已开始下载。`, false);
 
         } catch (err) {
             console.error(err);
-            showStatus('❌ 处理失败: ' + err.message, 'error');
+            addLog(`处理出错: ${err.message}`, true);
         } finally {
-            ui.btn.disabled = false;
-            ui.btn.textContent = '生成 C 表格';
+            btn.disabled = false;
+            btn.innerText = "开始处理并生成 C 表格";
         }
-    });
+    }
 
-    // ==========================================
-    // 🔧 工具函数
-    // ==========================================
-    function readFile(file) {
+    // 辅助函数：异步读取文件
+    function readFileAsync(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
-            reader.onload = e => resolve(e.target.result);
-            reader.onerror = e => reject(e);
+            reader.onload = (e) => resolve(e.target.result);
+            reader.onerror = (e) => reject(e);
             reader.readAsArrayBuffer(file);
         });
     }
-
-    function showStatus(text, type) {
-        ui.msg.textContent = text;
-        ui.msg.className = 'status ' + (type || '');
-    }
 </script>
+
 </body>
 </html>
